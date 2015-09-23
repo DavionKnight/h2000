@@ -1,0 +1,28 @@
+Copyright (C) 2009 Freescale Semiconductor, Inc. All rights reserved.
+
+ Author: Paul Barrette <paul.barrette@freescale.com>
+
+ This is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+Usage:
+ Typically, the fsl_tlu driver is compiled as a module and options are passed in
+ one of two ways:
+	1. Key=Value pairs after an "insmod" command.
+	2. Predefined options in /etc/modprobe.conf.
+
+Options For Module "fsl_tlu.ko":
+	log_level=0x03 tlu0_addr=0xFFE2F000 tlu0_bank0_addr=0 tlu0_bank0_size=0x00400000
+	tlu0_bank0_parity=0 tlu0_bank0_type=1 tlu0_bank1_addr=0 tlu0_bank1_size=0
+	tlu0_bank1_parity=0 tlu0_bank1_type=0 tlu0_bank2_addr=0 tlu0_bank2_size=0
+	tlu0_bank2_parity=0 tlu0_bank2_type=0 tlu0_bank3_addr=0 tlu0_bank3_size=0
+	tlu0_bank3_parity=0 tlu0_bank3_type=0 tlu1_addr=0xFFE15000 tlu1_bank0_addr=0
+	tlu1_bank0_size=0x00400000 tlu1_bank0_parity=0 tlu1_bank0_type=1
+	tlu1_bank1_addr=0 tlu1_bank1_size=0 tlu1_bank1_parity=0 tlu1_bank1_type=0
+	tlu1_bank2_addr=0 tlu1_bank2_size=0 tlu1_bank2_parity=0 tlu1_bank2_type=0
+	tlu1_bank3_addr=0 tlu1_bank3_size=0 tlu1_bank3_parity=0 tlu1_bank3_type=0
+
+Options For Test Module "fsl_tlu_test"
+	test_case=0 debug=0

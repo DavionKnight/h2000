@@ -1,0 +1,26 @@
+* Freescale Message Interrupt Module
+
+Reguired properities:
+- compatible : should be
+  "fsl,<chip>-msg", "fsl,mpic-msg" for 85xx/86xx message interrupt module.
+- reg : should contain message registers location and length.
+- interrupts : should contain 4 interrupts for 4 message interrupt source.
+- interrupt-parent: the phandle for the interrupt source. Only the mpic have
+  message interrupt source.
+
+Example:
+        message@41400 {
+		compatible = "fsl,p2020rdb-msg","fsl,mpic-msg";
+		reg = <0x41400 0x200>;
+		interrupts = <0xb0 2 0xb1 2 0xb2 2 0xb3 2>;
+		interrupt-parent = < &mpic >;
+	};
+
+        message@42400 {
+		compatible = "fsl,p2020rdb-msg","fsl,mpic-msg";
+		reg = <0x42400 0x200>;
+		interrupts = <0xb4 2 0xb5 2 0xb6 2 0xb7 2>;
+		interrupt-parent = < &mpic >;
+	};
+
+The above examples shows two message interrupt modules on P2020RDB.

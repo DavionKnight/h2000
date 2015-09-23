@@ -1,0 +1,17 @@
+Freescale's mpc85xx and some QorIQ platforms provide an option of
+configuring a part or full cache as SRAM. This cache SRAM representation
+in the device tree should be done as under:-
+
+Required properties:
+
+ - compatible: "fsl,l2sram"
+ - reg : offset of the cache-sram
+
+
+Example:
+
+      l2sram@fff00000 {
+              device_type = "memory";
+              compatible = "fsl,l2sram";
+              reg = <0x0 0xfff00000 0 0x10000>;
+      };

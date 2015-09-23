@@ -1,0 +1,80 @@
+config CRYPTO_DEV_FSL_CAAM
+	tristate "Freescale CAAM-Multicore driver backend (EXPERIMENTAL)"
+	depends on FSL_SOC
+	help
+	  Enables the driver module for Freescale's Cryptographic Accelerator
+	  and Assurance Module (CAAM). This module adds support for scatterlist
+	  crypto API, and also configures CAAM to operate as a DPAA component.
+
+config CRYPTO_DEV_FSL_CAAM_RINGSIZE
+	int "Job Queue ring size"
+	depends on CRYPTO_DEV_FSL_CAAM
+	range 2 9
+	default "9"
+	help
+	  Select size of Job Queue rings as a power of 2, within the
+	  range 2-9 (ring size 4-512).
+	  Examples:
+		2 => 4
+		3 => 8
+		4 => 16
+		5 => 32
+		6 => 64
+		7 => 128
+		8 => 256
+		9 => 512
+
+config CRYPTO_DEV_FSL_CAAM_INTC
+	bool "Job Queue interrupt coalescing"
+	depends on CRYPTO_DEV_FSL_CAAM
+	default y
+	help
+	  Enable the Job Queue's interrupt coalescing feature.
+	  Note: rev. 1 silicon erratum SEC #4 requires this be set.
+
+config CRYPTO_DEV_FSL_CAAM_INTC_COUNT_THLD
+	int "Job Queue interrupt coalescing count threshold"
+	depends on CRYPTO_DEV_FSL_CAAM_INTC
+	range 1 255
+	default 255
+	help
+	  Select number of descriptor completions to queue before
+	  raising an interrupt, in the range 1-255. Note that a selection
+	  of 1 functionally defeats the coalescing feature, and a selection
+	  equal or greater than the job ring size will force timeouts.
+
+config CRYPTO_DEV_FSL_CAAM_INTC_TIME_THLD
+	int "Job Queue interrupt coalescing timer threshold"
+	depends on CRYPTO_DEV_FSL_CAAM_INTC
+	range 1 65535
+	default 2048
+	help
+	  Select number of bus clocks/64 to timeout in the case that one or
+	  more descriptor completions are queued without reaching the count
+	  threshold. Range is 1-65535.
+
+config CRYPTO_DEV_FSL_CAAM_DC_LIB
+	tristate "Freescale CAAM Descriptor Library (EXPERIMENTAL)"
+	depends on CRYPTO_DEV_FSL_CAAM
+	help
+	  Enables the Descriptor Construction Library for use with
+	  Freescale's Cryptographic Accelerator and Assurance Module (CAAM).
+
+config CRYPTO_DEV_FSL_CAAM_CRYPTO_API
+	tristate "Linux Kernel Scatterlist Crypto API support"
+	depends on CRYPTO_DEV_FSL_CAAM_DC_LIB
+	select CRYPTO_ALGAPI
+	select CRYPTO_AUTHENC
+	help
+	  Selecting this will offload crypto for users of the
+	  scatterlist crypto API (such as the linux native IPSec
+	  stack NETKEY) to the SEC4 via a job queue.
+
+config CRYPTO_DEV_FSL_CAAM_DMAXOR_API
+	bool "Freescale CAAM XOR support"
+	select DMA_ENGINE
+	select ASYNC_XOR
+	help
+	  Selecting this will offload the xor-parity-calculation for
+	  users of the Asynchronous Transfers/Trasnforms API (such as
+	  md-raid5 driver) to the SEC4.

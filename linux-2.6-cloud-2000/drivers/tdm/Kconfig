@@ -1,0 +1,40 @@
+#
+# TDM subsystem configuration
+#
+
+menuconfig TDM
+	tristate "TDM support"
+	---help---
+	  More information is contained in the directory <file:Documentation/tdm/>,
+	  especially in the file called "summary" there.
+	  If you want TDM support, you should say Y here and also to the
+	  specific driver for your bus adapter(s) below.
+
+	  This TDM support can also be built as a module.  If so, the module
+	  will be called tdm-core.
+
+if TDM
+
+config TDM_CHARDEV
+	tristate "TDM device interface"
+	default n
+	help
+	  Say Y here to use tdm-dev device files, usually found in the /dev
+	  directory on your system.  They make it possible to have user-space
+	  programs use the TDM device. Information on how to do this is
+	  contained in the file <file:Documentation/tdm/dev-interface>.
+
+	  This support is also available as a module.  If so, the module
+	  will be called tdm-dev.
+
+config TDM_DEBUG_CORE
+	bool "TDM Core debugging messages"
+	help
+	  Say Y here if you want the TDM core to produce a bunch of debug
+	  messages to the system log.  Select this if you are having a
+	  problem with TDM support and want to see more of what is going on.
+
+source drivers/tdm/device/Kconfig
+source drivers/tdm/line_ctrl/Kconfig
+source drivers/tdm/test/Kconfig
+endif # TDM

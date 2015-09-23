@@ -1,0 +1,53 @@
+* Freescale Rapidio Controller
+
+Properties:
+- compatible: "fsl,rapidio-delta".
+  "fsl,rapidio-delta" should be listed for any chip whose rapidio controller is   compatible.
+
+- reg: For devices compatible with "fsl,rapidio-delta", should contain the
+  address and the length about all the rapidio controller's registers.
+
+- ranges: Should be defined according to the u-boot settings about SRIO.
+  Describe the memory mapped I/O space used by the controller.
+
+- interrupts: interrupt mapping for rapidio IRQ.
+
+- interrupt-parent: optional, if needed for interrupt mapping
+
+- fsl,rio-num-ports: The number of rapidio ports supported by this controller.
+
+message unit nodes:
+	- compatible: "fsl,rmu".
+	  "fsl,rmu" should be listed for any chip whose message unit is
+	  compatible.
+
+	- reg: registers mapping for message unit.
+
+	- interrupts: interrupt mapping for message unit controller.
+
+Example:
+
+
+	rapidio0: rapidio@ffec0000 {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		compatible = "fsl,rapidio-delta";
+		reg = <0 0xffec0000 0 0x20000>;
+		ranges = <0 0 0 0xa0000000 0 0x40000000>;
+		interrupt-parent = <&mpic>;
+		/* err_irq bell_outb_irq bell_inb_irq */
+		interrupts = <48 2 49 2 50 2>;
+		fsl,rio-num-ports = <2>;
+		message-unit@0 {
+			compatible = "fsl,rmu";
+			interrupt-parent = <&mpic>;
+			interrupts = <53 2 54 2>; /* msg1_tx_irq msg1_rx_irq */
+			reg = <0 0x13000 0 0x100>;
+		};
+		message-unit@1 {
+			compatible = "fsl,rmu";
+			interrupt-parent = <&mpic>;
+			interrupts = <55 2 56 2>; /* msg2_tx_irq msg2_rx_irq */
+			reg = <0 0x13100 0 0x100>;
+		};
+	};

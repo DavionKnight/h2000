@@ -1,0 +1,271 @@
+Copyright (C) 2007-2008 Freescale Semiconductor, Inc. All rights reserved.
+
+ Author: Geoff Thorpe <Geoff.Thorpe@freescale.com>
+
+ This is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+The following is a braindum-putative description of the 8572 pattern-matching
+engine block from a driver-writer's perspective. It's pretty long, but then
+the PME block has a lot of features that need explaining to be useful, and the
+same is perhaps true when reading the driver source.
+
+-------------
+the PME block
+-------------
+
+Basically, the pattern-matching block has a single DMA engine interface that
+virtualises up to 4 channels (to split between cores, users, differing
+configurations, ...). Behind that interface is a pipeline of processing units,
+a decompression unit (usable for hardware decompression but primarily to allow
+scanning of compressed data), and a pattern-scanning unit (which is itself
+broken into stages, but this out of scope). A given "context" for processing
+will indicate which stages should be used and with which parameters, and will
+also indicate whether the output from each stage should be suppressed or not,
+eg. data coming out of the deflate stage into the pattern-scanner may
+optionally be copied out to software, otherwise known as "recovery".
+
+---------------------------
+common-control and channels
+---------------------------
+
+The PME block has 5 interrupt lines and 5 corresponding 4K register spaces
+(laid out contiguously). The first interrupt and register space relates to
+"common control", essentially the configuration of the block globally and
+handling of global errors (here global is in contrast to "channel-specific").
+Note, global errors can be caused by activity in a specific channel, they are
+considered global if their scope and effect is not constrained to the channel
+involved.
+
+The remaining 4 interrupts and register spaces are for the 4 channels
+implemented by the PME. The 4 channels will be serviced using various
+scheduling semantics controlled by common-control registers, but should appear
+to their users as independent.
+
+Each channel has 3 FIFOs; the command FIFO, notification FIFO, and deallocate
+FIFO. The command FIFO is used to initialise/update contexts as well as
+initiate I/O operations using contexts. The notification FIFO produces output
+from I/O operations. The deallocate FIFO is used to release resources
+(specifically freebuffers, see below) back to hardware. The need for the
+deallocate FIFO is that processing of a command FIFO may block due to
+starvation thresholds, and will only unblock once resources are replenished -
+the deallocate FIFO allows this to happen and is never blocked.
+
+------------------
+channel interrupts
+------------------
+
+Each channel interrupt has associated registers; status, enable, disable, and
+inhibit. All except inhibit use the same bitwise definitions for the different
+possible sources of interrupt assertions, the inhibit register is a boolean.
+The interrupt sources correspond to channel-specific error conditions,
+starvation thresholds, and FIFO thresholds. The treatment of interrupt sources
+is as follows; if the corresponding bit is set in the disable register - the
+source is completely masked off (it doesn't show up in the status register and
+can't generate any interrupts), otherwise the source shows up in the status
+register. Any non-zero source in the status register will only generate an
+interrupt if both of the following are true; (a) the same source is non-zero
+in the enable register, and (b) the inhibit register (boolean) is not set. The
+status register is write-to-clear and level-triggered. So once asserted, a
+non-zero bit in the status register will remain asserted (and thus able to
+generate interrupts subject to the enable/inhibit registers) until a write is
+issued to clear it.  Also, if the source condition causing the status register
+bit to assert is true, then it will automatically reassert if a write-to-clear
+is attempted.
+
+The FIFO interrupt sources allow for a scalable and low-latency
+interrupt-handling scheme. Interrupt throttling based on timing is also
+supported by h/w but not needed by linux. In particular, use of the inhibit
+register allow for the use of soft-IRQs, bottom-halves, tasklets, [etc] to
+perform interrupt handling outside the ISR. Also, use of the enable register
+can selectively prevent certain FIFO sources from generating new interrupts
+until the existing known work has been completed (ie. no new interrupts until
+software catches up to hardware). In idle conditions then, interrupts fire as
+soon as something needs to be done. Under load, the amount of work handled per
+interrupt grows as work accumulates while interrupts are disabled/inhibited.
+This is a generalised model similar to "NAPI" support in some linux network
+drivers, except that it incorporates all interrupt sources rather than "just
+rx".
+
+A command FIFO has 3 index registers, CPI, CCI, and CEI. CPI is incremented by
+software to indicate new items of work (P==Produced). CCI is incremented by
+hardware to indicate completed commands (C==Consumed). CEI is incremented by
+software to indicate it has "expired" completed work items (E==Expired). The
+importance of the 3rd index (which otherwise appears meaningless) is that the
+command FIFO interrupt source is based on a non-zero difference between CEI
+and CCI, rather than CCI and CPI. Thus, interrupts can assert and be masked
+out to follow the paradigm that "software is chasing hardware". A notification
+FIFO has 2 index registers, NPI and NCI and the interrupt source is based on a
+non-zero difference between NCI and NPI. The deallocate FIFO has 2 index
+registers, DPI and DCI, and rather than having an expiry register for the
+interrupt source (as per the command FIFO), it has a low-fill interrupt
+threshold that, if set, causes the interrupt source to assert when the FIFO
+fill-level falls below a given value. The distinction is that deallocation is
+not something that needs tight completion handling in software, it's "drop and
+go". The low-fill level threshold is only needed to handle full FIFO
+scenarios.
+
+----------------
+Freebuffer lists
+----------------
+
+Both decompression and pattern-scanning are operations which can produce
+output of unpredictable size (moreover, of little direct relationship to input
+size). I/O commands issued via the command FIFO can provide up to 2 output
+descriptors (one each for decompression recovery and a pattern-scanning
+report), but these will truncate output in a non-recoverable way if more
+output per-stage is produced than the output descriptor provided. An
+alternative mechanism using "freebuffers" uses hardware-maintained lists of
+buffers to dynamically build output of the necessary size without needing to
+predict appropriate upper-bounds in advance.
+
+The PME block defines 8 "physical" freelists in the common-control register
+space, each of which has a configured size for all buffers in the list.
+Additionally, the common-control register space defines virtual-to-physical
+mappings, such that each of the 4 channels has 2 "virtual" freelists ("A" and
+"B") it can use. This mapping also indicates whether the given channel's
+virtual freelist is the "master" for the freelist or not - a hint that the
+channel should take responsibility for seeding buffers to the freelist. In
+this way, many channel freelists (often called "vfreelist"s in the code,
+v==virtual) may map to the same physical freelist or they may each map to
+different freelists, yet the "channel users" need neither care or know the
+difference. The reasons for such flexibility are to let software configure for
+different resourcing and contention requirements, and of course different
+output sizes, alignment requirements, multi-OS (AMP), [...].
+
+--------
+Contexts
+--------
+
+As mentioned, channel commands use contexts for decompression and/or
+pattern-scanning I/O that describe the operations and parameters required. The
+context itself is located in RAM and is either allocated dynamically (the
+default) or using a tabular form if instructed to when the channel is loaded.
+The tabular form requires a successful allocation of physically-contiguous
+memory (the "fsl_pme_8572_pages=<num>" kernel boot parameter uses early-boot
+allocations for this, also required for common-control resources like SRE and
+DXE). In this mode, contexts are tabular indices into the contiguous region so
+the driver software manages a bitmap allocator rather than using genuine
+memory allocation.
+
+A context has an "activity code" which uniquely describes what processing
+should be applied by each stage (decompression + scanning), as well which
+stages should provide output to software via the notification FIFO. Eg. this
+lets a user scan compressed data but without needing to recover the
+decompressed data (potentially saving a lot of memory bandwidth). For the
+decompression stage, the activity code indicates whether the mode is
+"passthru" or one of the "deflate", "gzip", or "zlib" modes. For the scanning
+stage, the activity code indicates whether pattern-scanning is performed or
+not, and if so, whether "residue" is used (allows patterns to be detected that
+bridge consecutive inputs, ie.  "stream" rather than "packet" processing). The
+scanning stage produces output if scanning is done, and doesn't produce output
+if scanning is not done. So, the activity code also determines (implicitly)
+whether 0, 1, or 2 outputs are generated per unit of input. The driver can
+track completion processing by knowing the context's activity code rather than
+needing to know anything about the I/O command itself.
+
+There are also parameters in the context to control the pattern-scanning
+stage. Ie. which pattern sets and subsets to scan for, verbosity of
+pattern-scanning reports, etc. This is beyond the scope of this document, but
+highlights the kind of thing involved.
+
+Finally, there is a special activity code that is used to send/receive the
+proprietary PMI records to/from the PME block to manipulate the
+pattern-matching database. (This protocol and the pattern-matching database
+format are not openly published so require the use of closed tools.) This
+activity code bypasses the conventional decompression and pattern-scanning
+stages and is interpreted directly by the DMA engine to manipuate the PME
+database memory.
+
+--------
+Residues
+--------
+
+Like contexts, each channel manages "residue" resources which may be
+dynamically allocated or may use a tabular allocation scheme using
+pre-allocated physically-contiguous memory. Residues are used by
+pattern-scanning contexts that require them to detect pattern matches that
+cross the fragmentation of scanned data units. Eg. packet-header scanning for
+ethernet frames would presumably operate on a 1-packet-per-scan-I/O basis and
+wouldn't require residue, whereas virus detection in TCP (ftp, http, [etc])
+data would probably require residue.
+
+----------------
+/dev/pm_database
+----------------
+
+The "database" user-interface provides admin software an I/O mechanism to pass
+PMI records to/from the PME block, using the conventional readv()/writev()
+operations on the character device file-descriptors. As mentioned above (see
+"contexts"), this protocol is closed and is used to program the PME database
+using contexts of a special activity code. This device is the only way (from
+user-space) to use contexts of this type. writev() operations are zero-copy
+and blocking, and readv() operations are single-copy and will block during the
+copy, but will not block if there is nothing waiting to be read.
+
+---------------
+/dev/pm_scanner
+---------------
+
+The "scanner" user-interface provides application code an I/O mechanism to
+create, configure, and use decompression and/or pattern-scanning contexts. The
+interface uses a custom ioctl() to handle the peculiarities of dual-output
+operation, blocking-vs-non-blocking forms, freelist-vs-user-provided output
+mechanisms, and zero-copy in both directions (where possible).
+
+  --->  Zero-copy
+
+Input from user-space is read directly from memory by the PME's DMA engine -
+the driver uses reference counting on the memory pages to facilitate this
+(releasing references once the command FIFO entry has been consumed by
+hardware). Where the user has provided their own output descriptor(s) for
+decompression and/or pattern-scanning output, the same trick is applied - the
+outut is DMA'd directly to the user's memory and the result merely indicates
+the amount of data produced (and whether or not it was truncated).
+
+More interesting is the case where the user has requested that output(s) be
+produced using freebuffers. In this case, the freelist must consist of 4K
+buffers (ie. pages), otherwise a failure will result. When the freelist output
+notification arrives, the driver will allocate an appropriately-sized VMA
+region in the user process's virtual memory space and map the freelist buffers
+into it to appear as a single contiguous output buffer (the PM produces
+IEEE1212.1 scatter-gather formatted, so data buffers will be complete pages
+without any linking in-band). In this way, zero-copy output to user-space is
+possible even when using freelist output, the user receives an output pointer
+in their address space corresponding to the freelist output. When the scanner
+file-descriptor closes (eg. on process exit), any remaining freebuffer
+mappings received with it are automatically cleaned up. Otherwise, another
+ioctl exists to explicitly unmap and release freelist output without closing
+the file-descriptor.
+
+  --->	Non-blocking
+
+The ioctl interface to pm_scanner is configurably blocking or non-blocking.
+The non-blocking variety will return to the user as soon as the I/O command
+has been issued to the channel's command FIFO. The input memory pages have
+reference counts to protect them against reuse (eg. deallocation then
+reallocation by another process) until the command is consumed by hardware,
+but the contents of the memory must not be altered by the user-process until
+the operation is known to have completed (otherwise any modifications may race
+against the DMA engine reading the memory). In the non-blocking mode, a
+completion ioctl is used to poll or wait (with optional timeout) on the
+completion of outstanding operations.
+
+-----------
+Exclusivity
+-----------
+
+The driver, its kernel API, and the user interfaces allow for locking such
+that operations can be performed sequentially when required. The PME block
+supports inter-channel exclusivity via a flag in command FIFO entries - when
+present, the PME block will not service other channels until it encounters a
+command in the same FIFO that does not have the flag set. Apart from the
+obvious QoS usage, this functionality is also required to ensure that atomic
+updates to the PME database do not interlace with scanning operations on other
+channels. Within software, another kind of exclusivity is implemented, namely
+giving exclusivity to a single context within a channel. This ensures that a
+sequence of operations can be issued to a channel for the same context (known
+as the "topdog"), attempts to issue operations for other contexts will either
+fail or sleep until topdog-exclusivity for the channel is released.

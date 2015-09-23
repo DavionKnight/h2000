@@ -1,0 +1,380 @@
+/*
+ * P1022 DS Core1 Device Tree Source in CAMP mode.
+ *
+ * In CAMP mode, each core needs to have its own dts. Only mpic and L2 cache
+ * can be shared, all the other devices must be assigned to one core only.
+ * This dts file allows core1 to have l2, dma2, eth1, pcie1, spi, elbc tdm and
+ * sata2.
+ *
+ * Please note to add "-b 1" for core1's dts compiling.
+ *
+ * Copyright 2010-2011 Freescale Semiconductor Inc.
+ *
+ * This program is free software; you can redistribute  it and/or modify it
+ * under  the terms of  the GNU General  Public License as published by the
+ * Free Software Foundation;  either version 2 of the  License, or (at your
+ * option) any later version.
+ */
+
+/dts-v1/;
+/ {
+	model = "fsl,P1022";
+	compatible = "fsl,P1022DS", "fsl,P1022DS-CAMP";
+	#address-cells = <1>;
+	#size-cells = <1>;
+
+	aliases {
+		ethernet1 = &enet1;
+		serial0 = &serial0;
+	};
+
+	cpus {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		PowerPC,P1022@1 {
+			device_type = "cpu";
+			reg = <0x1>;
+			next-level-cache = <&L2>;
+		};
+
+	};
+
+	memory {
+		device_type = "memory";
+		reg = <0x0 0x0>;		// Filled by U-Boot
+	};
+
+	localbus@ffe05000 {
+		#address-cells = <2>;
+		#size-cells = <1>;
+		compatible = "fsl,elbc", "simple-bus";
+		reg = <0xffe05000 0x1000>;
+		interrupts = <19 2>;
+		interrupt-parent = <&mpic>;
+
+		ranges = <0x0 0x0 0xe8000000 0x08000000
+			  0x1 0x0 0xe0000000 0x08000000
+			  0x2 0x0 0xff800000 0x00040000
+			  0x3 0x0 0xffdf0000 0x00008000>;
+
+		nor@0,0 {
+			#address-cells = <1>;
+			#size-cells = <1>;
+			compatible = "cfi-flash";
+			reg = <0x0 0x0 0x8000000>;
+			bank-width = <2>;
+			device-width = <1>;
+
+			partition@0 {
+				reg = <0x0 0x03000000>;
+				label = "ramdisk-nor";
+				read-only;
+			};
+
+			partition@3000000 {
+				reg = <0x03000000 0x00e00000>;
+				label = "diagnostic-nor";
+				read-only;
+			};
+
+			partition@3e00000 {
+				reg = <0x03e00000 0x00200000>;
+				label = "dink-nor";
+				read-only;
+			};
+
+			partition@4000000 {
+				reg = <0x04000000 0x00400000>;
+				label = "kernel-nor";
+				read-only;
+			};
+
+			partition@4400000 {
+				reg = <0x04400000 0x03b00000>;
+				label = "jffs2-nor";
+			};
+
+			partition@7f00000 {
+				reg = <0x07f00000 0x00080000>;
+				label = "dtb-nor";
+				read-only;
+			};
+
+			partition@7f80000 {
+				reg = <0x07f80000 0x00080000>;
+				label = "u-boot-nor";
+				read-only;
+			};
+		};
+
+		nand@2,0 {
+			#address-cells = <1>;
+			#size-cells = <1>;
+			compatible = "fsl,elbc-fcm-nand";
+			reg = <0x2 0x0 0x40000>;
+
+			partition@0 {
+				reg = <0x0 0x02000000>;
+				label = "u-boot-nand";
+				read-only;
+			};
+
+			partition@2000000 {
+				reg = <0x02000000 0x10000000>;
+				label = "jffs2-nand";
+			};
+
+			partition@12000000 {
+				reg = <0x12000000 0x08000000>;
+				label = "ramdisk-nand";
+				read-only;
+			};
+
+			partition@1a000000 {
+				reg = <0x1a000000 0x04000000>;
+				label = "kernel-nand";
+			};
+
+			partition@1e000000 {
+				reg = <0x1e000000 0x01000000>;
+				label = "dtb-nand";
+				read-only;
+			};
+
+			partition@1f000000 {
+				reg = <0x1f000000 0x21000000>;
+				label = "reserved-nand";
+			};
+		};
+	};
+
+	soc@ffe00000 {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		device_type = "soc";
+		compatible = "simple-bus";
+		ranges = <0x0 0xffe00000 0x100000>;
+		// CCSRBAR & soc regs, remove once parse code for immrbase fixed
+		reg = <0xffe00000 0x1000>;
+		bus-frequency = <0>;		// Filled out by uboot.
+
+		L2: l2-cache-controller@20000 {
+			compatible = "fsl,p1022-l2-cache-controller";
+			reg = <0x20000 0x1000>;
+			cache-line-size = <32>;	// 32 bytes
+			cache-size = <0x40000>;	// L2, 256K
+			interrupt-parent = <&mpic>;
+		};
+
+		spi@7000 {
+			cell-index = <0>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "fsl,espi";
+			reg = <0x7000 0x1000>;
+			interrupts = <59 0x2>;
+			interrupt-parent = <&mpic>;
+			espi,num-ss-bits = <4>;
+			mode = "cpu";
+
+			fsl_m25p80@0 {
+				#address-cells = <1>;
+				#size-cells = <1>;
+				compatible = "fsl,espi-flash";
+				reg = <0>;
+				linux,modalias = "fsl_m25p80";
+				spi-max-frequency = <40000000>; /* input clock */
+				partition@0 {
+					label = "u-boot-spi";
+					reg = <0x00000000 0x00100000>;
+					read-only;
+				};
+				partition@100000 {
+					label = "kernel-spi";
+					reg = <0x00100000 0x00500000>;
+					read-only;
+				};
+				partition@600000 {
+					label = "dtb-spi";
+					reg = <0x00600000 0x00100000>;
+					read-only;
+				};
+				partition@700000 {
+					label = "file system-spi";
+					reg = <0x00700000 0x00900000>;
+				};
+			};
+
+			legerity@0{
+				compatible = "fsl,espi-slic";
+				reg = <1>;
+				linux,modalias = "legerity";
+				spi-max-frequency = <8000000>;
+				ch1-rx-slot = <0>;
+				ch1-tx-slot = <0>;
+				ch2-rx-slot = <2>;
+				ch2-tx-slot = <2>;
+			};
+
+			legerity@1{
+				compatible = "fsl,espi-slic";
+				reg = <2>;
+				linux,modalias = "legerity";
+				spi-max-frequency = <8000000>;
+				ch1-rx-slot = <4>;
+				ch1-tx-slot = <4>;
+				ch2-rx-slot = <6>;
+				ch2-tx-slot = <6>;
+			};
+		};
+
+		dma@c300 {
+			#address-cells = <1>;
+			#size-cells = <1>;
+			compatible = "fsl,p1022-dma", "fsl,eloplus-dma";
+			reg = <0xc300 0x4>;
+			ranges = <0x0 0xc100 0x200>;
+			cell-index = <0>;
+			dma-channel@0 {
+				compatible = "fsl,eloplus-dma-channel";
+				reg = <0x0 0x80>;
+				cell-index = <0>;
+				interrupt-parent = <&mpic>;
+				interrupts = <76 2>;
+			};
+			dma-channel@80 {
+				compatible = "fsl,eloplus-dma-channel";
+				reg = <0x80 0x80>;
+				cell-index = <1>;
+				interrupt-parent = <&mpic>;
+				interrupts = <77 2>;
+			};
+			dma-channel@100 {
+				compatible = "fsl,eloplus-dma-channel";
+				reg = <0x100 0x80>;
+				cell-index = <2>;
+				interrupt-parent = <&mpic>;
+				interrupts = <78 2>;
+			};
+			dma-channel@180 {
+				compatible = "fsl,eloplus-dma-channel";
+				reg = <0x180 0x80>;
+				cell-index = <3>;
+				interrupt-parent = <&mpic>;
+				interrupts = <79 2>;
+			};
+		};
+
+		tdm@16000 {
+			device_type = "tdm";
+			compatible = "fsl,starlite-tdm";
+			reg = <0x16000 0x1000 0x2c000 0x2000>;
+			clock-frequency = <0>;
+			interrupts = <63 8 62 8>;
+			interrupt-parent = < &mpic >;
+		};
+
+		mdio@24000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "fsl,etsec2-mdio";
+			reg = <0x24000 0x1000 0xb0030 0x4>;
+
+			phy1: ethernet-phy@1 {
+				interrupt-parent = <&mpic>;
+				interrupts = <9 1>;
+				reg = <0x2>;
+			};
+		};
+
+		mdio@25000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "fsl,etsec2-mdio";
+			reg = <0x25000 0x1000 0xb1030 0x4>;
+		};
+
+		enet1: ethernet@B1000 {
+			#address-cells = <1>;
+			#size-cells = <1>;
+			cell-index = <0>;
+			device_type = "network";
+			model = "eTSEC";
+			compatible = "fsl,etsec2";
+			fsl,num_rx_queues = <0x8>;
+			fsl,num_tx_queues = <0x8>;
+			local-mac-address = [ 00 00 00 00 00 00 ];
+			interrupt-parent = <&mpic>;
+			fixed-link = <1 1 1000 0 0>;
+			phy-handle = <&phy1>;
+			phy-connection-type = "rgmii-id";
+			queue-group@0{
+				#address-cells = <1>;
+				#size-cells = <1>;
+				reg = <0xB1000 0x1000>;
+				interrupts = <35 2 36 2 40 2>;
+			};
+			queue-group@1{
+				#address-cells = <1>;
+				#size-cells = <1>;
+				reg = <0xB5000 0x1000>;
+				interrupts = <51 2 52 2 67 2>;
+			};
+		};
+
+		serial0: serial@4600 {
+			cell-index = <1>;
+			device_type = "serial";
+			compatible = "ns16550";
+			reg = <0x4600 0x100>;
+			clock-frequency = <0>;
+		};
+
+		crypto@30000 {
+			compatible = "fsl,sec3.3", "fsl,sec3.1","fsl,sec3.0",
+				     "fsl,sec2.4", "fsl,sec2.2","fsl,sec2.1",
+				     "fsl,sec2.0";
+			reg = <0x30000 0x10000>;
+			interrupts = <45 2 58 2>;
+			interrupt-parent = <&mpic>;
+			fsl,num-channels = <4>;
+			fsl,channel-fifo-len = <24>;
+			fsl,exec-units-mask = <0x97c>;
+			fsl,descriptor-types-mask = <0x3a30abf>;
+			fsl,multi-host-mode = "primary";
+			fsl,channel-remap = <0x3>;
+		};
+
+		sata@19000 {
+			compatible = "fsl,mpc8536-sata", "fsl,pq-sata";
+			reg = <0x19000 0x1000>;
+			cell-index = <2>;
+			interrupts = <41 0x2>;
+			interrupt-parent = <&mpic>;
+		};
+
+		mpic: pic@40000 {
+			interrupt-controller;
+			#address-cells = <0>;
+			#interrupt-cells = <2>;
+			reg = <0x40000 0x40000>;
+			compatible = "chrp,open-pic";
+			device_type = "open-pic";
+			protected-sources = <
+			24 16 3 42 58		/* MEM L2 mdio serial SEC-int1*/
+			29 30 34 17 18 24	/* eth0 */
+			20 21 22 23 75		/* dma1 ssi*/
+			43 28 72		/* i2c usb esdhc */
+			74 			/* sata1 pcie0 pcie1 */
+			8 10 11 12 4 5 6 7	/* pcie intx */
+			0 1  2  3
+			0xb0 0xb1 0xb2 0xb3
+			0xb4 0xb5 0xb6 0xb7	/* message */
+			0xe0 0xe1 0xe2 0xe3	/* msi */
+			0xe4 0xe5 0xe6 0xe7
+			64			/* diu */
+			>;
+		};
+	};
+};

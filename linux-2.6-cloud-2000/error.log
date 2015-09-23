@@ -1,0 +1,57 @@
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US" xml:lang="en-US">
+<head>
+<title>Upload a file to LTIB</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+</head>
+<body>
+<h3>LTIB: upload a file to the PPP</h3>
+This script only uploads a file to the PPP, if you want it reviewed<br>
+after uploading,  you must mark it for review and then run the PPP<br>
+review script here:
+<a href=https://auslxsc01.mtwk.freescale.net/ltib-scgi/ppp_review.cgi> PPP review script</a><br> 
+Alternatively, if this file is referenced from the main trunk of LTIB,<br>
+it will be picked up for review by the weekly maintenance run of<br>
+the PPP review scripts<br><br>
+<form method="post" action="/ltib-cgi/ppp_upload.cgi?license=on" enctype="multipart/form-data">
+<input type="hidden" name="ltib_data" value="3918"  /><table border=""><tr><td>Your name: </td> <td><input type="text" name="name" value="liushuo" size="32" maxlength="64" /></td></tr> <tr><td>Your email: </td> <td><input type="text" name="email" value="b35362@freescale.com" size="32" maxlength="64" /></td></tr> <tr></tr> <tr><td>File to upload: </td> <td><input type="file" name="filename" value="/tmp/0135-DTS-Add-dts-for-single-core-version-of-P1020RDB.patch" size="32" maxlength="64" /></td></tr> <tr><td>Save as name (not normally needed): </td> <td><input type="text" name="savename" tabindex="1"  size="32" maxlength="64" /></td></tr> <tr><td>License: </td> <td><select name="license" >
+<option value="GPL">GPL</option>
+<option selected="selected" value="GPL v2">GPL v2</option>
+<option value="GPL v3">GPL v3</option>
+<option value="BSD">BSD</option>
+<option value="Dual GPL/BSD">Dual GPL/BSD</option>
+<option value="Freescale EULA">Freescale EULA</option>
+<option value="LGPL">LGPL</option>
+<option value="unlimited">unlimited</option>
+<option value="Freescale Proprietary">Freescale Proprietary</option>
+<option value="Apache">Apache</option>
+<option value="Netperf">Netperf</option>
+</select></td></tr> <tr><td>Distribution: </td> <td><select name="distributable" >
+<option selected="selected" value="select"></option>
+<option value="no">For internal company use only</option>
+<option value="clickthru">Only with with clickthru license</option>
+<option value="restricted">For restricted distribution only</option>
+<option value="pending">Intended to be public, but not yet</option>
+<option value="yes">Make this file publicly available</option>
+</select></td></tr> <tr><td>Mark for review:</td> <td><select name="history" >
+<option selected="selected" value="yes">Yes, this can be reviewed</option>
+<option value="ignore">No, exclude this from all reviews</option>
+</select></td></tr> <tr><td>Script options:</td> <td><label><input type="checkbox" name="warn_only" value="on" />Do not enforce DOS line checks</label></td></tr></table><br /><b>Please describe the file you are uploading, including its origins/url etc (modify appropriately)</b><br /><textarea name="description"  rows="12" cols="80">DTS: Add dts for single core version of P1020RDB
+
+Signed-off-by: Sandeep Gopalpet &lt;sandeep.kumar@freescale.com&gt;
+
+Copyright owned by: Freescale Semiconductor, Inc.
+Author: Sandeep Gopalpet
+
+&lt;/pre&gt;
+%TABLE{headerbg=&quot;none&quot; headercolor=&quot;#000000&quot; headervalign=&quot;bottom&quot; databg=&quot;#eeeeee,#eeeeee&quot; tablerules=&quot;all&quot; sort=&quot;off&quot;}%
+
+| *Patch identifier* | *File name* | *Distribution* | *License* | *Copyright owner* | *Freescale copyright dates in file* | *Authors* | *Date of source file update (patch created)* | *Number of lines changed* | *Patch reviewer* | *Date patch was reviewed and uploaded* |
+| [[http://auslxsc01.mtwk.freescale.net/ppp/linux-2.6.35-qoriq-DTS-Add-dts-for-single-core-version-of-.patch][linux-2.6.35-qoriq-DTS-Add-dts-for-single-core-version-of-.patch]] | arch/powerpc/boot/dts/p1011rdb.dts | restricted | GPL | Freescale Semiconductor, Inc. | 2010 | Sandeep Gopalpet | 2010-03-19 | 661 (+661, -0) | liushuo | 2011-01-30 |
+&lt;pre&gt;</textarea><br /><br /><input type="reset"  name=".reset" /><input type="submit" name=".submit" /><div><input type="hidden" name=".cgifields" value="warn_only"  /></div></form><hr />
+<font color=red> ERROR: </font>Cannot open linux-2.6.35-qoriq-DTS-Add-dts-for-single-core-version-of-.patch for write: File exists
+
+</body>
+</html>
