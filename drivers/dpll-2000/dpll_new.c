@@ -203,14 +203,14 @@ int idt285_write(unsigned char slot_num, unsigned short addr, unsigned char data
 	
 	//3step,write wr enable at eadge jump
 	wdata = bufaddr;
-	fpga_read_once(slot, I2C_WREN, 1,&wdata);
+	fpga_read_once(slot, I2C_WREN, &wdata);
 	wdata = (wdata^0x1)&0x1;
 	fpga_write_once(slot, I2C_WREN, &wdata);
 
 	//4step,if we can write 
 	do{
 		wdata = bufaddr;
-		fpga_read_once(slot, I2C_EN, 1, &wdata);
+		fpga_read_once(slot, I2C_EN, &wdata);
 		if((wdata&0x8000)||(delay_count<1))
 		break;
 	}while(delay_count--);
@@ -228,7 +228,8 @@ int dpll_idt285_init(unsigned char slot)
 	char reg_buf[20];
 	char *fret = NULL;
 	unsigned short regaddr;
-	unsigned char val;
+	unsigned char val,data;
+	
 
 	if((fp = fopen("idt285_Reg.txt","r")) == NULL)
 	{
@@ -240,13 +241,18 @@ int dpll_idt285_init(unsigned char slot)
 	fret = fgets(reg_buf,20,fp);
 	while(!feof(fp))
 	{
-		sscanf(reg_buf,"%hx%hhx",&regaddr,&val);
+		sscanf(reg_buf,"%hx:%hhx",&regaddr,&val);
 		if(regaddr > 0x7)
 		{
+//if(regaddr<50)
+//{
+//		printf("%s\n",reg_buf);
 //			printf("Write:%02x %02x\n",regaddr,val);
+//}
 			idt285_write(slot, regaddr, val);
 			usleep(10);
 			idt285_read(slot, regaddr,&data);
+//if(regaddr<50)
 //			printf("Read:%02x %02x\n",regaddr,data);
 		}
 		memset(reg_buf,0,20);
@@ -255,17 +261,18 @@ int dpll_idt285_init(unsigned char slot)
 
 	fclose(fp);
 	
-#ifdef IDTDEBUG
+#if 1
+	unsigned short addr,i;
 	for(i = 0;i<0x317;i++)
 	{
 		addr = i;
-		idt285_read(addr,&data);
+		idt285_read(slot,addr,&data);
 		printf("0x%02x ",data);
 		if((i+1)%16)
 		;
 		else
 		printf("\n");
-		usleep(100);
+		usleep(10);
 	}
 	printf("\n");
 #endif
