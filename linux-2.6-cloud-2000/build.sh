@@ -23,9 +23,9 @@ make  p1020rdb-pc.dtb
 #make jh1022_usb2.dtb
 #make mpc8308edd.dtb
 
-cp ./arch/powerpc/boot/p1020rdb-pc.dtb /home/sxl/tftpboot/1604-dtb
-cp ./arch/powerpc/boot/uImage /home/sxl/tftpboot/uImage
+#cp ./arch/powerpc/boot/p1020rdb-pc.dtb /home/sxl/tftpboot/1604-dtb
+#cp ./arch/powerpc/boot/uImage /home/sxl/tftpboot/uImage
 
-cp ./arch/powerpc/boot/p1020rdb-pc.dtb /home/sxl/project/p1020/ubifs-make/1604-dtb
-cp ./arch/powerpc/boot/uImage /home/sxl/project/p1020/ubifs-make/uImage
+cp ./arch/powerpc/boot/p1020rdb-pc.dtb ../mkubi/bin/1604-dtb
+cp ./arch/powerpc/boot/uImage ../mkubi/bin/uImage
 
