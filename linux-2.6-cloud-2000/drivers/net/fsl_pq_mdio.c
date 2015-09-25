@@ -508,6 +508,7 @@ int proc_read_mdio(char *page, char **start, off_t off, int count, int *eof, voi
 	unsigned short mdio_val = 0;
 	unsigned short ret_val = 0;	
 	
+	printk("new_bus->id=%s\n",new_bus->id);
 
 	mdio_val |= 0x1;
 	fsl_pq_mdio_write(new_bus,30,16,mdio_val);
