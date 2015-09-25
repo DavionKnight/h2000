@@ -100,7 +100,7 @@ int mdiobus_register(struct mii_bus *bus)
 	bus->dev.class = &mdio_bus_class;
 	bus->dev.groups = NULL;
 	dev_set_name(&bus->dev, "%s", bus->id);
-
+printk("\nbus->dev:%s\n\n",bus->id);
 	err = device_register(&bus->dev);
 	if (err) {
 		printk(KERN_ERR "mii_bus %s failed to register\n", bus->id);
@@ -115,7 +115,7 @@ int mdiobus_register(struct mii_bus *bus)
 	for (i = 0; i < PHY_MAX_ADDR; i++) {
 		if ((bus->phy_mask & (1 << i)) == 0) {
 			struct phy_device *phydev;
-
+printk("PHY_MAX_ADDR:%d\n",i);
 			phydev = mdiobus_scan(bus, i);
 			if (IS_ERR(phydev)) {
 				err = PTR_ERR(phydev);

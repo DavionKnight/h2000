@@ -455,7 +455,7 @@ static int __init fsl_espi_probe(struct of_device *ofdev,
 
 		
 
-		ret = gpio_direction_output(gpio,  1);;
+		ret = gpio_direction_output(gpio,  0);;
 		if (ret) {
 			dev_err(dev, "can't set output direction for gpio "
 				"#%d: %d\n", i, ret);

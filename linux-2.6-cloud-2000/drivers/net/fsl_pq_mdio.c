@@ -46,6 +46,13 @@
 #include "gianfar.h"
 #include "fsl_pq_mdio.h"
 
+/*add by zhangjj*/
+#include <linux/proc_fs.h>
+#include <linux/sched.h>
+#include <asm/uaccess.h>
+
+struct mii_bus *new_bus;
+/*end*/
 struct fsl_pq_mdio_priv {
 	void __iomem *map;
 	struct fsl_pq_mdio __iomem *regs;
@@ -191,8 +198,19 @@ static int fsl_pq_mdio_find_free(struct mii_bus *new_bus)
 		u32 phy_id;
 
 		if (get_phy_id(new_bus, i, &phy_id))
+		{
+			printk("phyaddr = %d,phy_id = %d\n",i,phy_id);
 			return -1;
-
+		}
+		printk("new_bus->id=%s\n",new_bus->id);
+		if(!strcasecmp(new_bus->id,"mdio@ffe26000"))
+		{
+			if(2==i)
+			{
+				printk("phyaddr = %d,phy_id = %d\n",i,phy_id);
+				break;
+			}
+		}
 		if (phy_id == 0xffffffff)
 			break;
 	}
@@ -273,7 +291,6 @@ static int fsl_pq_mdio_probe(struct of_device *ofdev,
 	struct fsl_pq_mdio __iomem *regs = NULL;
 	void __iomem *map;
 	u32 __iomem *tbipa;
-	struct mii_bus *new_bus;
 	int tbiaddr = -1;
 	const u32 *addrp;
 	u64 addr = 0, size = 0;
@@ -295,13 +312,13 @@ static int fsl_pq_mdio_probe(struct of_device *ofdev,
 	new_bus->reset = &fsl_pq_mdio_reset,
 	new_bus->priv = priv;
 	fsl_pq_mdio_bus_name(new_bus->id, np);
-
+printk("\n\nnew_bus->id=%s\n",new_bus->id);
 	addrp = of_get_address(np, 0, &size, NULL);
 	if (!addrp) {
 		err = -EINVAL;
 		goto err_free_bus;
 	}
-
+printk("addrp=0x%x\n\n",addrp);
 	/* Set the PHY base address */
 	addr = of_translate_address(np, addrp);
 	if (addr == OF_BAD_ADDR) {
@@ -372,7 +389,6 @@ static int fsl_pq_mdio_probe(struct of_device *ofdev,
 		err = -ENODEV;
 		goto err_free_irqs;
 	}
-
 	for_each_child_of_node(np, tbi) {
 		if (!strncmp(tbi->type, "tbi-phy", 8))
 			break;
@@ -380,11 +396,9 @@ static int fsl_pq_mdio_probe(struct of_device *ofdev,
 
 	if (tbi) {
 		const u32 *prop = of_get_property(tbi, "reg", NULL);
-
 		if (prop)
 			tbiaddr = *prop;
 	}
-
 	if (tbiaddr == -1) {
 		out_be32(tbipa, 0);
 
@@ -480,14 +494,72 @@ static struct of_platform_driver fsl_pq_mdio_driver = {
 	.remove = fsl_pq_mdio_remove,
 };
 
+/*add by zhangjj*/
+struct proc_dir_entry *mdio_dir, *mdiofile;
+
+#define STRINGLEN 100
+char global_buffer[STRINGLEN];
+
+#define OPER_RD 0x2
+#define OPER_WR 0x1
+
+int proc_read_mdio(char *page, char **start, off_t off, int count, int *eof, void *data) 
+{
+	unsigned short mdio_val = 0;
+	unsigned short ret_val = 0;	
+	
+
+	mdio_val |= 0x1;
+	fsl_pq_mdio_write(new_bus,30,16,mdio_val);
+
+	mdio_val = 0;
+	mdio_val |= 0x0e<<8;
+	mdio_val |= OPER_RD;
+	fsl_pq_mdio_write(new_bus,30,17,mdio_val);
+
+	ret_val = fsl_pq_mdio_read(new_bus,30,17);
+	if(ret_val&0x11)
+	{
+		printk("ret_val = 0x%x\n",ret_val);
+		return 1;
+	}
+	printk("Read Value:\n");
+	ret_val = fsl_pq_mdio_read(new_bus,30,24);
+	printk("24: 0x%x\n",ret_val);
+	ret_val = fsl_pq_mdio_read(new_bus,30,25);
+	printk("25: 0x%x\n",ret_val);
+	ret_val = fsl_pq_mdio_read(new_bus,30,26);
+	printk("26: 0x%x\n",ret_val);
+	ret_val = fsl_pq_mdio_read(new_bus,30,27);
+	printk("27: 0x%x\n",ret_val);
+
+        return 1;
+}
+
+int proc_write_mdio(struct file *file, const char *buffer, unsigned long count, void *data) 
+{
+	return 0;
+}
+/*add end*/
+
 int __init fsl_pq_mdio_init(void)
 {
+/*add by zhangjj 2015-9-25*/
+        mdio_dir = proc_mkdir("mdio", NULL);
+        mdiofile = create_proc_entry("option", S_IRUGO, mdio_dir);
+        mdiofile->read_proc = proc_read_mdio;
+        mdiofile->write_proc = proc_write_mdio;
+/*add end*/
 	return of_register_platform_driver(&fsl_pq_mdio_driver);
 }
 module_init(fsl_pq_mdio_init);
 
 void fsl_pq_mdio_exit(void)
 {
+/*add by zhangjj 2015-9-25*/
+        remove_proc_entry("mdio", mdio_dir);
+        remove_proc_entry("option", NULL);
+/*end*/
 	of_unregister_platform_driver(&fsl_pq_mdio_driver);
 }
 module_exit(fsl_pq_mdio_exit);

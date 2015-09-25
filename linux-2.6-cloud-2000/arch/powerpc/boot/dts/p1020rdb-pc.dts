@@ -21,7 +21,7 @@
 		serial1 = &serial1;
 		ethernet0 = &enet0;
 		ethernet1 = &enet1;
-		//ethernet2 = &enet2;
+		ethernet2 = &enet2;
 		pci0 = &pci0;
 		pci1 = &pci1;
 	};
@@ -343,7 +343,29 @@
 				device_type = "tbi-phy";
 			};
 		};
+		mdio@26000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "fsl,etsec2-mdio";
+			reg = <0x26000 0x1000 0xb2030 0x4>;
 
+			phy4: ethernet-phy@0 {
+				interrupt-parent = <&mpic>;
+				interrupts = <4 1>;
+				reg = <0x0>;
+			};
+
+			phy5: ethernet-phy@1e {
+				interrupt-parent = <&mpic>;
+				interrupts = <5 1>;
+				reg = <0x1e>;
+			};
+			phy6: ethernet-phy@2 {
+			interrupt-parent = <&mpic>;
+			interrupts = <6 1>;
+			reg = <0x3>;
+			};
+		};
 		ptp_timer: ptimer@b0e00 {
 			compatible = "fsl,gianfar-ptp-timer";
 			reg = <0xb0e00 0xb0>;
@@ -432,7 +454,8 @@
 			clk-handle = <&etsec3_clk>;
 			local-mac-address = [ 00 00 00 00 00 00 ];
 			interrupt-parent = <&mpic>;
-			phy-handle = <&phy1>;
+			phy-handle = <&phy5>;
+			fixed-link = <1 1 1000 0 0>;
 			phy-connection-type = "rgmii-id";
 
 			ptimer-handle = <&ptp_timer>;
