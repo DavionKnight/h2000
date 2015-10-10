@@ -637,6 +637,73 @@ int fpga_spi_read(unsigned short addr, unsigned char *data, size_t count)
 	return ret;
 }
 EXPORT_SYMBOL(fpga_spi_read);
+
+#define UNIT_REG_BASE			0x2000
+#define CTRL_STATUS_REG			(UNIT_REG_BASE+0)
+#define READ_OVER_FLAG			(UNIT_REG_BASE+0x0002)
+#define WRITE_ONCE_REG			(UNIT_REG_BASE+0x0010)
+#define READ_ONCE_REG			(UNIT_REG_BASE+0x0020)
+#define BUFFER_ADDR_400			(UNIT_REG_BASE+0x0200)
+#define WORDSIZE			4
+
+int unitboard_fpga_write(unsigned char slot, unsigned short addr, unsigned short *wdata)
+{
+	unsigned char data[32] = {0};
+	unsigned int fpga_devata = 0;
+
+	data[0] = ((slot & 0x0f) << 4) | ((addr & 0xf00) >> 8);
+	data[1] = addr & 0xff;
+	data[2] = (*wdata & 0xff00) >> 8;
+	data[3] = *wdata & 0xff;
+#ifdef IDTDEBUG
+	printf("Write Data:\n");
+	pdata(data,4);
+#endif	
+	fpga_spi_write(WRITE_ONCE_REG, data, WORDSIZE);
+	//usleep(1);
+
+	return 0;
+}
+EXPORT_SYMBOL(unitboard_fpga_write);
+int unitboard_fpga_read(unsigned char slot, unsigned short addr, unsigned short* wdata)
+{
+	unsigned char data[32] = {0}, mode = 1;
+	unsigned int read_flag = 0;
+        unsigned int delay_count = 1000;
+	unsigned short bufaddr = 0x400;
+
+	data[0] = ((slot & 0x0f) << 4) | ((addr & 0xf00) >> 8);
+	data[1] = addr & 0xff;
+	data[2] = ((mode & 0x07) << 5) | ((bufaddr&0x1f00) >> 8);
+	data[3] = bufaddr & 0xff;
+#ifdef IDTDEBUG
+	printf("Read data:\n");
+	pdata(data,4);
+#endif
+
+	fpga_spi_write(READ_ONCE_REG, data, WORDSIZE);
+
+	do{
+		fpga_spi_read(READ_OVER_FLAG, &read_flag, WORDSIZE);
+		if((read_flag == 0)||(delay_count <1))
+			break;
+	}while(delay_count--);
+
+	memset(data,0,32);
+	fpga_spi_read((UNIT_REG_BASE + ((bufaddr)>>1)), data, 4);
+	//usleep(1);
+#ifdef IDTDEBUG
+	printf("Return Data:\n");	
+	pdata(data,4);
+#endif
+	if((bufaddr)%2)
+		*wdata = data[0]<<8 | data[1];
+	else
+		*wdata = data[2]<<8 | data[3];
+	return 0;
+}
+EXPORT_SYMBOL(unitboard_fpga_read);
+
 /*-------------------------------------------------------------------------*/
 
 /* Read-only message with current device setup */

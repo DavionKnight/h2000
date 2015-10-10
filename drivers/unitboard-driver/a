@@ -1,0 +1,21 @@
+#!/bin/bash
+
+
+export KPATH=/home/kevin/works/projects/H18CE-1604C/linux-2.6-cloud 
+export K_SRC_PATH=/home/kevin/works/projects/H18CE-1604C/linux-2.6-cloud 
+
+export PATH=/opt/eldk42/usr/bin:$PATH
+TARGET_ARCH=powerpc
+
+#export CROSS_COMPILE=ppc_85xxDP-
+
+
+rm ./build -rf
+
+
+make ARCH=powerpc CROSS_COMPILE=ppc_85xxDP- 
+
+cp fpga_test.ko  /tftpboot/
+
+
+echo "copy dpll.ko finished."
