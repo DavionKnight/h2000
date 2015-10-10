@@ -6,48 +6,12 @@
 #include <linux/delay.h>
 #include <linux/types.h>
 
-//extern int dpll_spi_read(unsigned short addr, unsigned char *data, size_t count);
-//extern int dpll_spi_write(unsigned short addr, unsigned char *data, size_t count);
+extern int unitboard_fpga_write(unsigned char slot, unsigned short addr, unsigned short *wdata);
+extern int unitboard_fpga_read(unsigned char slot, unsigned short addr, unsigned short *wdata);
+extern int unitboard_fpga_read2(unsigned char slot, unsigned short addr, unsigned short *wdata, size_t count);
 
-//extern int fpga_spi_read(unsigned short addr, unsigned char *data, size_t count);
-//extern int fpga_spi_write(unsigned short addr, unsigned char *data, size_t count);
-extern int flash_spi_read(loff_t addr, unsigned char *data, size_t count);
-extern int flash_spi_write(loff_t addr, unsigned char *data, size_t count);
-extern int flash_spi_sector_erase(unsigned int addr);
-extern int flash_spi_chip_erase();
 
-static struct task_struct *test_task;
-//static struct task_struct *test_task1;
 #if 0
-int dpll_thread(void *d){
-	unsigned short i=0,data = 0;
-	printk("come in dpll thread\n");
-	dpll_spi_read(0x03,(unsigned char *)&data,2);
-	printk("03 = 0x%x\n",data);
-	while(i>=0)
-	{
-		if(-1 == dpll_spi_write(0x04,(unsigned char *)&i,2))
-		{
-			printk("dpll write error\n");
-		}
-	
-		if(-1 ==dpll_spi_read(0x04,(unsigned char *)&data,2))
-		{
-			printk("dpll read error\n");
-		}
-		if(i!=data)
-		{
-			printk("dpll ERROR,i=0x%x,data=0x%x\n",i,data);
-			break;
-		}
-		i++;
-		if(i>0xfff0)
-			i = 0;
-		msleep(2);
-	}
-	return 0;
-}
-#endif
 int flash_thread(void *d)
 {
 	unsigned short i=0,j = 0;
@@ -56,72 +20,45 @@ int flash_thread(void *d)
 
 	printk("before erase\n");
 
-	flash_spi_sector_erase(0x80000);
-
-	while(i < 257)
-	{
-		memset(data_w,0,sizeof(data_w));
-		memset(data_r,0,sizeof(data_r));
-
-		for(j=0;j<256;j++)
-		{
-			if(1%2)
-			{
-				data_w[j] = j;
-			}
-			else
-			{
-				data_w[j] = 256 - j;
-			}
-		}
-		if(-1 == flash_spi_write(addr,data_w, (size_t)sizeof(data_w)))
-		{
-			printk("fpga write error\n");
-		}
-		msleep(10);
-		if(-1 == flash_spi_read(addr,data_r,(size_t)sizeof(data_r)))
-		{
-			printk("fpga read error\n");
-		}
-		if(memcmp(data_w,data_r,sizeof(data_w))||(i == 0))
-		{
-			printk("\naddr=0x%x, i = %d\n",addr,i);
-			printk("\nmemcmp=0x%d\n",memcmp(data_w,data_r,sizeof(data_w)));
-			printk("write data:\n");
-			for(j = 0;j<256;j++)
-			{
-				printk("0x%02X ",data_w[j]);
-				if((j+1)%16==0)
-					printk("\n");
-			}
-			printk("read data:\n");
-			for(j = 0;j<256;j++)
-			{
-				printk("0x%02X ",data_r[j]);
-				if((j+1)%16==0)
-					printk("\n");
-			}
-			if(i!=0)
-			{
-				printk("Error,i=%d\n",i);
-				break;
-			}
-		}
-		i++;
-		addr+=256;
-		msleep(2);
-	}
-	printk("\nend\n");
 	return 0;
 }
+#endif
 
 static int __init hello_init(void)
 {
      	printk(KERN_ALERT "driver init!\n");
+	
+	unsigned short data;
+#if 0
+	unitboard_fpga_read(2,0,&data);	
+	printk("version:0x%x\n",data);
+	unitboard_fpga_read(2,2,&data);	
+	printk("hwversion:0x%x\n",data);
+	unitboard_fpga_read(2,0x84,&data);	
+	printk("1data:0x%x\n",data);
+	data ^= 0xffff;
+	printk("data:0x%x\n",data);
 
-	test_task = kthread_create(flash_thread,NULL , "test_task");
-//	test_task1 = kthread_create(fpga_thread,NULL , "test1_task");
-    	wake_up_process(test_task);
+	unitboard_fpga_write(2,0x84,&data);
+	unitboard_fpga_read(2,0x84,&data);	
+	printk("2data:0x%x\n",data);
+#endif
+	unsigned short wdata[16] = {0};
+	unitboard_fpga_read2(2,0x80,wdata,4);
+	printk("0=0x%x\n",wdata[0]);	
+	printk("1=0x%x\n",wdata[1]);	
+	printk("2=0x%x\n",wdata[2]);	
+	printk("3=0x%x\n",wdata[3]);	
+	printk("4=0x%x\n",wdata[4]);	
+	memset(wdata,0,16*2);
+	unitboard_fpga_read2(2,0x80,wdata,5);
+	printk("0=0x%x\n",wdata[0]);	
+	printk("1=0x%x\n",wdata[1]);	
+	printk("2=0x%x\n",wdata[2]);	
+	printk("3=0x%x\n",wdata[3]);	
+	printk("4=0x%x\n",wdata[4]);	
+	printk("5=0x%x\n",wdata[5]);	
+	
 
      	return 0;
 }

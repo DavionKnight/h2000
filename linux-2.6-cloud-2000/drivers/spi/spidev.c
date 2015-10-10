@@ -257,7 +257,6 @@ int mix_spi_read(struct spi_device *spi,unsigned short addr, unsigned char *data
 		buf[2] = (unsigned char)((address) & 0xff);
 		buf[3] = 0;
 
-
 		memcpy(&buf[4], data, count);
 		/* Build our spi message */
 		spi_message_init(&message);
@@ -602,7 +601,7 @@ int fpga_spi_read(unsigned short addr, unsigned char *data, size_t count)
 	  chip_select = FPGA_CHIP;
 	
     //mutex_lock(&spidev->buf_lock);	
-#if 1
+#if 0
 	//printk("now in dpll_read.++++++++++++\n");
 	{
 		int i;
@@ -624,6 +623,8 @@ int fpga_spi_read(unsigned short addr, unsigned char *data, size_t count)
 			}
 		}
 	}
+#else
+	mix_spi_read(spi, (unsigned short)addr, data, count);
 #endif
 //	ret = mix_spi_read(spi, addr, data, count);
 //	mutex_unlock(&spidev->buf_lock);	
@@ -638,6 +639,8 @@ int fpga_spi_read(unsigned short addr, unsigned char *data, size_t count)
 }
 EXPORT_SYMBOL(fpga_spi_read);
 
+static struct mutex			unitboard_lock;
+
 #define UNIT_REG_BASE			0x2000
 #define CTRL_STATUS_REG			(UNIT_REG_BASE+0)
 #define READ_OVER_FLAG			(UNIT_REG_BASE+0x0002)
@@ -645,6 +648,16 @@ EXPORT_SYMBOL(fpga_spi_read);
 #define READ_ONCE_REG			(UNIT_REG_BASE+0x0020)
 #define BUFFER_ADDR_400			(UNIT_REG_BASE+0x0200)
 #define WORDSIZE			4
+//#define IDTDEBUG
+
+void pdata(unsigned char *pdata, int count)
+{
+	int i;
+	for (i = 0; i < count; i++) {
+		printk(" %02x", pdata[i]);
+	}
+	printk("\n");
+}
 
 int unitboard_fpga_write(unsigned char slot, unsigned short addr, unsigned short *wdata)
 {
@@ -656,7 +669,7 @@ int unitboard_fpga_write(unsigned char slot, unsigned short addr, unsigned short
 	data[2] = (*wdata & 0xff00) >> 8;
 	data[3] = *wdata & 0xff;
 #ifdef IDTDEBUG
-	printf("Write Data:\n");
+	printk("Write Data:\n");
 	pdata(data,4);
 #endif	
 	fpga_spi_write(WRITE_ONCE_REG, data, WORDSIZE);
@@ -665,7 +678,7 @@ int unitboard_fpga_write(unsigned char slot, unsigned short addr, unsigned short
 	return 0;
 }
 EXPORT_SYMBOL(unitboard_fpga_write);
-int unitboard_fpga_read(unsigned char slot, unsigned short addr, unsigned short* wdata)
+int unitboard_fpga_read_one(unsigned char slot, unsigned short addr, unsigned short* wdata)
 {
 	unsigned char data[32] = {0}, mode = 1;
 	unsigned int read_flag = 0;
@@ -677,9 +690,10 @@ int unitboard_fpga_read(unsigned char slot, unsigned short addr, unsigned short*
 	data[2] = ((mode & 0x07) << 5) | ((bufaddr&0x1f00) >> 8);
 	data[3] = bufaddr & 0xff;
 #ifdef IDTDEBUG
-	printf("Read data:\n");
+	printk("Read data:\n");
 	pdata(data,4);
 #endif
+	mutex_lock(&unitboard_lock);
 
 	fpga_spi_write(READ_ONCE_REG, data, WORDSIZE);
 
@@ -688,12 +702,12 @@ int unitboard_fpga_read(unsigned char slot, unsigned short addr, unsigned short*
 		if((read_flag == 0)||(delay_count <1))
 			break;
 	}while(delay_count--);
-
 	memset(data,0,32);
 	fpga_spi_read((UNIT_REG_BASE + ((bufaddr)>>1)), data, 4);
+	mutex_unlock(&unitboard_lock);
 	//usleep(1);
 #ifdef IDTDEBUG
-	printf("Return Data:\n");	
+	printk("Return Data:\n");	
 	pdata(data,4);
 #endif
 	if((bufaddr)%2)
@@ -702,7 +716,74 @@ int unitboard_fpga_read(unsigned char slot, unsigned short addr, unsigned short*
 		*wdata = data[2]<<8 | data[3];
 	return 0;
 }
+EXPORT_SYMBOL(unitboard_fpga_read_one);
+
+int unitboard_fpga_read(unsigned char slot, unsigned short addr, unsigned short *wdata, size_t count)
+{
+	unsigned char data[WORDSIZE] = {0}, mode;
+	unsigned int read_flag = 0, i = 0;
+        unsigned int delay_count = 1000;
+	unsigned short bufaddr = 0x400;
+
+#if 0
+	if(count == 1)
+	{
+		mode = 1;
+		data[3] = bufaddr & 0xff;
+	}
+	else 
+#endif
+	if(count <= 16)
+	{
+		mode = 2;
+		data[3] = (bufaddr & 0xf0) | (count & 0xf);
+	}
+	else if(count <= 128)
+	{
+		mode = 3;
+		data[3] = (bufaddr & 0x80) | (count & 0x7f);
+	}
+	else
+	{
+		printk("read count error\n");
+		return 0;
+	}
+	data[0] = ((slot & 0x0f) << 4) | ((addr & 0xf00) >> 8);
+	data[1] = addr & 0xff;
+	data[2] = ((mode & 0x07) << 5) | ((bufaddr&0x1f00) >> 8);
+
+#ifdef IDTDEBUG
+	printk("Read data:\n");
+	pdata(data,4);
+#endif
+
+	mutex_lock(&unitboard_lock);
+	fpga_spi_write(READ_ONCE_REG, data, WORDSIZE);
+
+	do{
+		fpga_spi_read(READ_OVER_FLAG, &read_flag, WORDSIZE);
+		if((read_flag == 0)||(delay_count <1))
+			break;
+	}while(delay_count--);
+	memset(data,0,WORDSIZE);
+	
+	for(i = 0; i<(count/2 + count%2); i++)
+	{
+		fpga_spi_read((UNIT_REG_BASE + ((bufaddr)>>1) + i), data, WORDSIZE);
+		*(wdata+i*2) = data[2]<<8 | data[3];
+		if(count>=(i+1)*2)
+		*(wdata+i*2+1) = data[0]<<8 | data[1];
+	}
+	mutex_unlock(&unitboard_lock);
+	//usleep(1);
+#ifdef IDTDEBUG
+	printk("Return Data:\n");	
+	pdata(wdata,2*count);
+#endif
+	return 0;
+}
 EXPORT_SYMBOL(unitboard_fpga_read);
+
 
 /*-------------------------------------------------------------------------*/
 
@@ -1341,6 +1422,7 @@ static int __devinit spidev_probe(struct spi_device *spi)
 	unsigned long		minor;
 
 	mutex_init(&chip_sel_lock); 
+	mutex_init(&unitboard_lock); 
 	
 	/* Allocate driver data */
 	spidev = kzalloc(sizeof(*spidev), GFP_KERNEL);

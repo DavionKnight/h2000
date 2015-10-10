@@ -1,8 +1,8 @@
 #!/bin/bash
 
 
-export KPATH=/home/kevin/works/projects/H18CE-1604C/linux-2.6-cloud 
-export K_SRC_PATH=/home/kevin/works/projects/H18CE-1604C/linux-2.6-cloud 
+export KPATH=/home/kevin/works/projects/H20PN-2000/linux-2.6-cloud-2000 
+export K_SRC_PATH=/home/kevin/works/projects/H20PN-2000/linux-2.6-cloud-2000 
 
 export PATH=/opt/eldk42/usr/bin:$PATH
 TARGET_ARCH=powerpc
