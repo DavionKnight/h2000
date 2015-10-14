@@ -58,7 +58,6 @@ struct fsl_pq_mdio_priv {
 	struct fsl_pq_mdio __iomem *regs;
 };
 
-int readFlag=0;
 
 /*
  * Write value to the PHY at mii_id at register regnum,
@@ -96,7 +95,7 @@ int fsl_pq_local_mdio_write(struct fsl_pq_mdio __iomem *regs, int mii_id,
 
 	return 0;
 }
-
+EXPORT_SYMBOL(fsl_pq_local_mdio_write);
 /*
  * Read the bus for PHY at addr mii_id, register regnum, and
  * return the value.  Clears miimcom first.  All PHY operation
@@ -130,6 +129,7 @@ int fsl_pq_local_mdio_read(struct fsl_pq_mdio __iomem *regs,
 	//printk("read reg=%lx  mii_id =%d regnum=%x val=%x\n", regs,mii_id, regnum, value);
 	return value;
 }
+EXPORT_SYMBOL(fsl_pq_local_mdio_read);
 
 static struct fsl_pq_mdio __iomem *fsl_pq_mdio_get_regs(struct mii_bus *bus)
 {
@@ -159,13 +159,6 @@ struct fsl_pq_mdio __iomem *preg;
 int fsl_pq_mdio_read(struct mii_bus *bus, int mii_id, int regnum)
 {
 	struct fsl_pq_mdio __iomem *regs = fsl_pq_mdio_get_regs(bus);
-
-	if(!strcasecmp(bus->id,"mdio@ffe24000"))
-	{
-		//printk("$$$$$$$$$$$$$ bus->id = %s\n", bus->id);
-		preg = fsl_pq_mdio_get_regs(bus);
-	}
-
 
 	/* Read the local MII regs */
 	return(fsl_pq_local_mdio_read(regs, mii_id, regnum));
@@ -339,7 +332,14 @@ static int fsl_pq_mdio_probe(struct of_device *ofdev,
 	new_bus->reset = &fsl_pq_mdio_reset,
 	new_bus->priv = priv;
 	fsl_pq_mdio_bus_name(new_bus->id, np);
-printk("\n\nnew_bus->id=%s\n",new_bus->id);
+/*add by zhangjj 2015-10-15*/
+	printk("\n\nnew_bus->id=%s\n",new_bus->id);
+	if(!strcasecmp(bus->id,"mdio@ffe24000"))
+	{
+		//printk("$$$$$$$$$$$$$ bus->id = %s\n", bus->id);
+		preg = fsl_pq_mdio_get_regs(bus);
+	}
+/*add end*/
 	addrp = of_get_address(np, 0, &size, NULL);
 	if (!addrp) {
 		err = -EINVAL;
@@ -524,122 +524,8 @@ static struct of_platform_driver fsl_pq_mdio_driver = {
 /*add by zhangjj*/
 struct proc_dir_entry *mdio_dir, *mdiofile;
 
-#define STRINGLEN 100
-char global_buffer[STRINGLEN];
-
-#define OPER_RD 0x2
-#define OPER_WR 0x1
-
-int phyaddr = 2;
-
 int proc_read_mdio(char *page, char **start, off_t off, int count, int *eof, void *data) 
 {
-	unsigned short mdio_val = 0;
-	unsigned short ret_val = 0;	
-
-
-	int i;
-	if(readFlag == 0)
-	{
-	/* config 0200 reg to 0x80 */
-	mdio_val = (2 << 8);
-	mdio_val |= 1;
-
-	fsl_pq_local_mdio_write(preg,30,16,mdio_val);
-
-	mdio_val = 0x80;
-	fsl_pq_local_mdio_write(preg,30,24,mdio_val);
-	mdio_val = 0;
-	fsl_pq_local_mdio_write(preg,30,25,mdio_val);
-	mdio_val = 0;
-	fsl_pq_local_mdio_write(preg,30,26,mdio_val);
-	mdio_val = 0;
-	fsl_pq_local_mdio_write(preg,30,27,mdio_val);
-
-	mdio_val = 0;
-	mdio_val |= OPER_WR;
-	fsl_pq_local_mdio_write(preg,30,17,mdio_val);
-
-	for(i=0; i<0xffff; i++);
-
-	/* config 000e reg to 0x8b */
-	mdio_val = 0; 
-	mdio_val |= 1;
-
-	fsl_pq_local_mdio_write(preg,30,16,mdio_val);
-
-	mdio_val = 0x8b;
-	fsl_pq_local_mdio_write(preg,30,24,mdio_val);
-	mdio_val = 0;
-	fsl_pq_local_mdio_write(preg,30,25,mdio_val);
-	mdio_val = 0;
-	fsl_pq_local_mdio_write(preg,30,26,mdio_val);
-	mdio_val = 0;
-	fsl_pq_local_mdio_write(preg,30,27,mdio_val);
-
-	mdio_val = 0;
-	mdio_val |= 0x0e<<8;
-	mdio_val |= OPER_WR;
-	fsl_pq_local_mdio_write(preg,30,17,mdio_val);
-
-	for(i=0; i<0xffff; i++);
-	readFlag = 0xa5;
-	}
-
-
-	mdio_val |= 0x1;
-	fsl_pq_local_mdio_write(preg,30,16,mdio_val);
-
-	mdio_val = 0;
-	mdio_val |= 0x0e<<8;
-	//mdio_val |= 0x0b<<8;
-	mdio_val |= OPER_RD;
-	fsl_pq_local_mdio_write(preg,30,17,mdio_val);
-
-read:
-	ret_val = fsl_pq_local_mdio_read(preg,30,17);
-	if(ret_val&0x11)
-	{
-		printk("ret_val = 0x%x\n",ret_val);
-		goto read;
-	}
-	
-	ret_val = fsl_pq_local_mdio_read(preg,30,24);
-	printk("24: 0x%x\n",ret_val);
-	ret_val = fsl_pq_local_mdio_read(preg,30,25);
-	printk("25: 0x%x\n",ret_val);
-	ret_val = fsl_pq_local_mdio_read(preg,30,26);
-	printk("26: 0x%x\n",ret_val);
-	ret_val = fsl_pq_local_mdio_read(preg,30,27);
-	printk("27: 0x%x\n",ret_val);
-
-	mdio_val = (1 << 8);
-	
-	mdio_val |= 0x1;
-	fsl_pq_local_mdio_write(preg,30,16,mdio_val);
-
-	mdio_val = 0;
-	//mdio_val |= 0x04<<8;
-	mdio_val |= OPER_RD;
-	fsl_pq_local_mdio_write(preg,30,17,mdio_val);
-
-read2:
-	ret_val = fsl_pq_local_mdio_read(preg,30,17);
-	if(ret_val&0x11)
-	{
-		printk("ret_val2 = 0x%x\n",ret_val);
-		goto read2;
-	}
-	
-	ret_val = fsl_pq_local_mdio_read(preg,30,24);
-	printk("24: 0x%x\n",ret_val);
-	ret_val = fsl_pq_local_mdio_read(preg,30,25);
-	printk("25: 0x%x\n",ret_val);
-	ret_val = fsl_pq_local_mdio_read(preg,30,26);
-	printk("26: 0x%x\n",ret_val);
-	ret_val = fsl_pq_local_mdio_read(preg,30,27);
-	printk("27: 0x%x\n",ret_val);
-
         return 1;
 }
 
