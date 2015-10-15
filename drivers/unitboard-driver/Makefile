@@ -40,6 +40,6 @@ default:
 endif
 
 clean: 
-	rm *.ko *.mod.* *.o *.symvers *.order
+	rm *.ko *.mod.o *.o *.symvers *.order
 
 

@@ -15,7 +15,7 @@
 #include <linux/spi/spidev.h>
 #include <string.h>
 
-#define	IDTDEBUG
+//#define	IDTDEBUG
 #define IDT285_SLAVE_ADDR		0xf8
 
 #define UNIT_REG_BASE			0x2000
