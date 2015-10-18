@@ -154,7 +154,15 @@ int fsl_pq_mdio_write(struct mii_bus *bus, int mii_id, int regnum, u16 value)
  * Read the bus for PHY at addr mii_id, register regnum, and
  * return the value.  Clears miimcom first.
  */
-struct fsl_pq_mdio __iomem *preg;
+struct fsl_pq_mdio __iomem *preg = NULL;
+int bcm53101_get_preg(struct fsl_pq_mdio **upreg)
+{
+	if(preg == NULL)
+		return -1;
+	*upreg = preg;
+	return 0;
+}
+EXPORT_SYMBOL(bcm53101_get_preg);
 
 int fsl_pq_mdio_read(struct mii_bus *bus, int mii_id, int regnum)
 {
@@ -332,14 +340,6 @@ static int fsl_pq_mdio_probe(struct of_device *ofdev,
 	new_bus->reset = &fsl_pq_mdio_reset,
 	new_bus->priv = priv;
 	fsl_pq_mdio_bus_name(new_bus->id, np);
-/*add by zhangjj 2015-10-15*/
-	printk("\n\nnew_bus->id=%s\n",new_bus->id);
-	if(!strcasecmp(bus->id,"mdio@ffe24000"))
-	{
-		//printk("$$$$$$$$$$$$$ bus->id = %s\n", bus->id);
-		preg = fsl_pq_mdio_get_regs(bus);
-	}
-/*add end*/
 	addrp = of_get_address(np, 0, &size, NULL);
 	if (!addrp) {
 		err = -EINVAL;
@@ -450,6 +450,14 @@ printk("addrp=0x%x\n\n",addrp);
 				new_bus->name);
 		goto err_free_irqs;
 	}
+/*add by zhangjj 2015-10-15*/
+	printk("\n\np new_bus->id=%s\n",new_bus->id);
+	if(!strcasecmp(new_bus->id,"mdio@ffe24000"))
+	{
+		printk("$$$$$$$$$$$$$ bus->id = %s\n", new_bus->id);
+		preg = fsl_pq_mdio_get_regs(new_bus);
+	}
+/*add end*/
 
 	return 0;
 
