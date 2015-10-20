@@ -24,24 +24,21 @@ struct fsl_pq_mdio {
 	u8 res4[2728];
 } __attribute__ ((packed));
 
-struct fsl_pq_mdio __iomem *preg;
+struct fsl_pq_mdio __iomem *preg = NULL;
 
 extern int bcm53101_get_preg(struct fsl_pq_mdio **upreg);
 extern int fsl_pq_local_mdio_read(struct fsl_pq_mdio __iomem *regs, int mii_id, int regnum);
 extern int fsl_pq_local_mdio_write(struct fsl_pq_mdio __iomem *regs, int mii_id, int regnum, u16 value);
 
-#if 0
-int flash_thread(void *d)
-{
-	unsigned short i=0,j = 0;
-	loff_t addr = 0x80000;
-	unsigned char data_w[256], data_r[256];
+#define PSEPHY_ACCESS_CTRL	16
+#define PSEPHY_RDWR_CTRL	17
+#define PSEPHY_ACCESS_REG1	24
+#define PSEPHY_ACCESS_REG2	25
+#define PSEPHY_ACCESS_REG3	26
+#define PSEPHY_ACCESS_REG4	27
 
-	printk("before erase\n");
-
-	return 0;
-}
-#endif
+#define MII_ID			30
+#define ACCESS_EN		1
 
 #define STRINGLEN 100
 char global_buffer[STRINGLEN];
@@ -51,7 +48,118 @@ char global_buffer[STRINGLEN];
 int readFlag=0;
 int phyaddr = 2;
 
-static int __init hello_init(void)
+
+int fsl_mdio_write(unsigned short addr, unsigned short val)
+{
+	int ret = 0;
+
+	if(NULL == preg)
+	{
+		printk("preg is NULL\n");
+		return -1;
+	}
+
+	ret = fsl_pq_local_mdio_write(preg, MII_ID, addr, val);
+
+	return ret;
+}
+int fsl_mdio_read(unsigned short addr, unsigned short *val)
+{
+        int ret = 0;
+
+        if(NULL == preg)
+        {
+                printk("preg is NULL\n");
+                return -1;
+        }
+
+        ret = fsl_pq_local_mdio_read(preg, MII_ID, addr);
+	*val = ret & 0xffff;
+	
+        return 0;
+
+}
+
+int bcm53101_write(unsigned char page, unsigned char addr, unsigned short value)
+{
+        unsigned short mdio_val = 0;
+        unsigned short ret_val = 0, count = 0xffff;
+	
+	page &= 0xff;
+	mdio_val |= (page << 8);
+        mdio_val |= ACCESS_EN;
+
+        fsl_mdio_write(PSEPHY_ACCESS_CTRL,mdio_val);
+
+        mdio_val = value;
+        fsl_mdio_write(PSEPHY_ACCESS_REG1,mdio_val);
+#if 0
+        mdio_val = 0;
+        fsl_mdio_write(PSEPHY_ACCESS_REG2,mdio_val);
+        mdio_val = 0;
+        fsl_mdio_write(PSEPHY_ACCESS_REG3,mdio_val);
+        mdio_val = 0;
+        fsl_mdio_write(PSEPHY_ACCESS_REG4,mdio_val);
+#endif
+
+	mdio_val = 0;
+        mdio_val |= addr << 8;
+        mdio_val |= OPER_WR;
+        fsl_mdio_write(PSEPHY_RDWR_CTRL,mdio_val);
+
+//	msleep(1);	
+	do
+	{
+		fsl_mdio_read(PSEPHY_RDWR_CTRL, &mdio_val);
+		if(!(mdio_val&0x11))
+			break;
+		count --;
+//		msleep(1);
+	}while(count > 0);
+	return 0;
+}
+
+int bcm53101_read(unsigned char page, unsigned char addr, unsigned short *value)
+{
+        unsigned short mdio_val = 0;
+        unsigned short ret_val = 0, count = 0xffff;
+
+        page &= 0xff;
+        mdio_val |= (page << 8);
+        mdio_val |= ACCESS_EN;
+        fsl_mdio_write(PSEPHY_ACCESS_CTRL,mdio_val);
+	
+        mdio_val = 0;
+        mdio_val |= addr << 8;
+        mdio_val |= OPER_RD;
+        fsl_mdio_write(PSEPHY_RDWR_CTRL,mdio_val);
+
+        do
+        {
+                ret_val = fsl_mdio_read(PSEPHY_RDWR_CTRL, &mdio_val);
+                if((!(mdio_val&0x11))||(ret_val))
+                        break;
+		count --;
+//		msleep(1);
+        }while(count > 0);
+        ret_val = fsl_mdio_read(PSEPHY_ACCESS_REG1, &mdio_val);
+	if(ret_val)
+		return -1;
+	*value = mdio_val;
+//        printk("24: 0x%x\n",mdio_val);
+#if 0
+        ret_val = fsl_pq_local_mdio_read(preg,30,25);
+        printk("25: 0x%x\n",ret_val);
+        ret_val = fsl_pq_local_mdio_read(preg,30,26);
+        printk("26: 0x%x\n",ret_val);
+        ret_val = fsl_pq_local_mdio_read(preg,30,27);
+        printk("27: 0x%x\n",ret_val);
+#endif
+	return 0;
+}
+
+
+static int __init bcm53101_init(void)
 {
      	printk(KERN_ALERT "driver init!\n");
 
@@ -60,7 +168,20 @@ static int __init hello_init(void)
 		printk("Get preg error\n");
 		return 0;	
 	}
+
 	unsigned short mdio_val = 0;
+#if 1
+	bcm53101_write(2, 0, 0x80);	
+	printk("1\n");
+	bcm53101_write(0, 0xe, 0x8b);
+	printk("2\n");
+	bcm53101_read(0, 0xe, &mdio_val);
+	printk("0,0e:0x%x\n",mdio_val);
+	bcm53101_read(1, 0, &mdio_val);
+	printk("1,0:0x%x\n",mdio_val);
+
+#else
+
 	unsigned short ret_val = 0;	
 
 
@@ -165,17 +286,17 @@ read2:
 	printk("26: 0x%x\n",ret_val);
 	ret_val = fsl_pq_local_mdio_read(preg,30,27);
 	printk("27: 0x%x\n",ret_val);
-
+#endif
      	return 0;
 }
 
-static void __exit hello_exit(void)
+static void __exit bcm53101_exit(void)
 {
-     printk(KERN_ALERT "hello driver exit\n");
+     printk(KERN_ALERT "bcm53101 driver exit\n");
 }
 
-module_init(hello_init);
-module_exit(hello_exit);
+module_init(bcm53101_init);
+module_exit(bcm53101_exit);
 
 
 
