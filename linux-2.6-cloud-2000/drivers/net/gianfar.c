@@ -3775,7 +3775,30 @@ static int gfar_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		if (devfp_tx_hook(skb, dev) == AS_FP_STOLEN)
 			return 0;
 #endif
+#if 0
+	unsigned char newbuf[1600], bcmtag[4]={0};
+	unsigned int newlen = 0;
 
+	bcmtag[0] = 0x20;
+	bcmtag[3] = 0x1f;
+	memcpy(newbuf, skb->data, 12);
+	memcpy(newbuf+12, bcmtag, 4);
+	memcpy(newbuf+16, (skb->data+12), (skb->tail-skb->data-12));
+
+	/* copy received packet to skb buffer */
+	memcpy(skb->data, newbuf, skb->tail-skb->data+4);
+	/* Prep the skb for the packet */
+	skb_put(skb, 4);
+
+	printk("dev = %s\n",dev->name);
+	for(i=0;i<(skb->tail-skb->head);i++)
+	{
+		if(!(i%16))
+			printk("\n");
+		printk("%02x ",skb->data[i]);
+	}
+	printk("\n");
+#endif
 #ifdef CONFIG_RX_TX_BD_XNGE
 	rq = smp_processor_id() + 1;
 #else

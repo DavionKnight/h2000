@@ -15,7 +15,6 @@ rm ./build -rf
 
 make ARCH=powerpc CROSS_COMPILE=ppc_85xxDP- 
 
-cp drv_bcm53101.ko  /tftpboot/
+cp bcm53101.ko  /tftpboot/
 
 
-echo "copy dpll.ko finished."
