@@ -1,3 +1,8 @@
+/*********************************
+ *Author:     zhangjj@bjhuahuan.com
+ *date:	      2015-10-20
+ *Modified:
+ ********************************/
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
