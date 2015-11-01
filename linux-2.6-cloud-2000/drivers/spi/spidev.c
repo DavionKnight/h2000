@@ -658,7 +658,7 @@ void pdata(unsigned char *pdata, int count)
 	}
 	printk("\n");
 }
-
+/*write a short data*/
 int unitboard_fpga_write(unsigned char slot, unsigned short addr, unsigned short *wdata)
 {
 	unsigned char data[32] = {0};
@@ -678,6 +678,7 @@ int unitboard_fpga_write(unsigned char slot, unsigned short addr, unsigned short
 	return 0;
 }
 EXPORT_SYMBOL(unitboard_fpga_write);
+/*read a short data*/
 int unitboard_fpga_read_one(unsigned char slot, unsigned short addr, unsigned short* wdata)
 {
 	unsigned char data[32] = {0}, mode = 1;
@@ -717,7 +718,7 @@ int unitboard_fpga_read_one(unsigned char slot, unsigned short addr, unsigned sh
 	return 0;
 }
 EXPORT_SYMBOL(unitboard_fpga_read_one);
-
+/*read 1~128 short data*/
 int unitboard_fpga_read(unsigned char slot, unsigned short addr, unsigned short *wdata, size_t count)
 {
 	unsigned char data[WORDSIZE] = {0}, mode;
@@ -784,6 +785,160 @@ int unitboard_fpga_read(unsigned char slot, unsigned short addr, unsigned short 
 }
 EXPORT_SYMBOL(unitboard_fpga_read);
 
+struct ic_oper_para{
+	unsigned char slot;
+	unsigned short addr;
+	unsigned int len;
+	unsigned char *rdbuf;
+};
+
+#define BUFF_ADDR_BASE	UNIT_REG_BASE+0x200
+#define READ_CIR_BASE	UNIT_REG_BASE+0x100
+
+#define READ_MAX_SIZE	0x1a
+#define CLAUSE_ALL	0x100
+
+struct ic_oper_para[CLAUSE_ALL];
+
+int fpga_rm_rd_set(int clause, struct ic_oper_para *oper)
+{
+	unsigned char data[WORDSIZE] = {0}, mode;
+        unsigned short read_reg;
+
+	if((clause<0)||(clause>=CLAUSE_ALL))
+		return -1;
+	if(oper->len > READ_MAX_SIZE)
+	{
+		printk("Read length should less than 0x1A\n");
+		return -1;
+	}
+
+	ic_oper_para[clause].slot = oper->slot;
+	ic_oper_para[clause].addr = oper->addr;
+	ic_oper_para[clause].len = oper->len;
+
+	bufaddr = BUFF_ADDR_BASE + (clause*READ_MAX_SIZE)/2;  
+        read_reg = READ_CIR_BASE + clause;
+        if(count <= 16)
+        {
+                mode = 2;
+                data[3] = (bufaddr & 0xf0) | (count & 0xf);
+        }
+        else if(count <= 128)
+        {
+                mode = 3;
+                data[3] = (bufaddr & 0x80) | (count & 0x7f);
+        }
+        else
+        {
+                 printk("read count error\n");
+                return 0;
+        }
+        data[0] = ((slot & 0x0f) << 4) | ((addr & 0xf00) >> 8);
+        data[1] = addr & 0xff;
+        data[2] = ((mode & 0x07) << 5) | ((bufaddr&0x1f00) >> 8);
+
+	fpga_spi_write(read_reg, data, WORDSIZE);
+	return 0;
+}
+
+int fpga_rm_rd(int clause, struct ic_oper_para *oper)
+{
+	unsigned char data[WORDSIZE] = {0}, mode;
+
+	if((clause<0)||(clause>=CLAUSE_ALL))
+		return -1;
+	if(oper->len > READ_MAX_SIZE)
+	{
+		printk("Read length should less than 0x1A\n");
+		return -1;
+	}
+
+	if((ic_oper_para[clause].slot != oper->slot) ||(ic_oper_para[clause].addr != oper->addr) || (ic_oper_para[clause].len != oper->len))
+	{
+		printk("Oper para is not confirm with config");
+		return -1;
+	}
+	
+	for(i = 0; i<(count/2 + count%2); i++)
+	{
+		fpga_spi_read((UNIT_REG_BASE + ((bufaddr)>>1) + i), data, WORDSIZE);
+		*(wdata+i*2) = data[2]<<8 | data[3];
+		if(count>=(i+1)*2)
+		*(wdata+i*2+1) = data[0]<<8 | data[1];
+	}
+
+}
+#if 0
+/**************************************
+* buffer assigned
+* 0x200--circle_slot0
+* 0x570--circle_slot1
+* 0x8e0--circle_slot2
+* 0xc50--circle_slot3
+* 0xfc0--real_read_write
+**************************************/
+#define BUFF_ADDR_BASE	UNIT_REG_BASE+0x200
+#define BUFF_OFFSET	0x370
+#define BUFF_REAL_OPER	UNIT_REG_BASE+0xfc0
+
+#define READ_CIR_BASE	UNIT_REG_BASE+0x100
+#define READ_CIR_OFFSET	0x40
+
+#define READ_CIR_EN_BASE	UNIT_REG_BASE+0x40
+#define READ_CIR_EN_OFFSET	0x4
+
+int unitboard_circle_read_set(unsigned char slot, unsigned short addr)
+{
+	unsigned char data[32] = {0}, mode = 1;
+	unsigned int read_flag = 0;
+        unsigned short read_reg = READ_CIR_BASE + READ_CIR_OFFSET*slot + addr;
+	unsigned short bufaddr = (BUFF_ADDR_BASE + BUFF_OFFSET * slot)*2 + addr;
+
+	data[0] = ((slot & 0x0f) << 4) | ((addr & 0xf00) >> 8);
+	data[1] = addr & 0xff;
+	data[2] = ((mode & 0x07) << 5) | ((bufaddr&0x1f00) >> 8);
+	data[3] = bufaddr & 0xff;
+#ifdef IDTDEBUG
+	printk("Read data:\n");
+	pdata(data,4);
+#endif
+
+	fpga_spi_write(read_reg, data, WORDSIZE);
+
+	return 0;
+}
+int unitboard_circle_read_en(unsigned char slot, unsigned short addr)
+{
+	
+	unsigned short cir_en_addr = READ_CIR_EN_BASE + READ_CIR_EN_OFFSET * slot + addr/16;
+	
+	fpga_spi_read();
+
+}
+
+int unitboard_circle_read()
+{
+	do{
+		fpga_spi_read(READ_OVER_FLAG, &read_flag, WORDSIZE);
+		if((read_flag == 0)||(delay_count <1))
+			break;
+	}while(delay_count--);
+	memset(data,0,32);
+	fpga_spi_read((UNIT_REG_BASE + ((bufaddr)>>1)), data, 4);
+	//usleep(1);
+#ifdef IDTDEBUG
+	printk("Return Data:\n");	
+	pdata(data,4);
+#endif
+	if((bufaddr)%2)
+		*wdata = data[0]<<8 | data[1];
+	else
+		*wdata = data[2]<<8 | data[3];
+	return 0;
+}
+EXPORT_SYMBOL(unitboard_fpga_read_one);
+#endif
 
 /*-------------------------------------------------------------------------*/
 
