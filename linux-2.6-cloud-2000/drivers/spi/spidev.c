@@ -640,7 +640,7 @@ int fpga_spi_read(unsigned short addr, unsigned char *data, size_t count)
 EXPORT_SYMBOL(fpga_spi_read);
 
 static struct mutex			unitboard_lock;
-#if 0
+#if 1
 #define UNIT_REG_BASE			0x2000
 #define CTRL_STATUS_REG			(UNIT_REG_BASE+0)
 #define READ_OVER_FLAG			(UNIT_REG_BASE+0x0002)

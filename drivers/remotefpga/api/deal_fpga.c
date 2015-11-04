@@ -4,17 +4,7 @@
  * @date	2015-11-4
  *********************************************/
 
-#include <stdint.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <getopt.h>
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#include <linux/types.h>
-#include <linux/spi/spidev.h>
-#include <string.h>
-#include <pthread.h>
+#include "deal_fpga.h"
 
 //#define	IDTDEBUG
 pthread_mutex_t mutex_cir = PTHREAD_MUTEX_INITIALIZER;
@@ -65,49 +55,58 @@ int fpga_close(void)
 	return 0;
 }
 
-
-struct ic_oper_para{
-        unsigned char slot;
-        unsigned short addr;
-        unsigned int len;
-        unsigned short *rdbuf;
-};
-
+/*buff base addr */
 #define BUFF_ADDR_BASE  	UNIT_REG_BASE+0x200
-#define BUFF_RT_BASE		BUFF_ADDR_BASE
+/*buff size */
 #define BUFF_SIZE		0xD00
+
+/*realtime read buff base addr */
+#define BUFF_RT_RD_BASE		BUFF_ADDR_BASE
+/*realtime read buff size */
 #define BUFF_RT_RD_SIZE		0x80
+/*buff addr used in read control reg*/
+#define DATABUFF_RT_RD_BASE	((BUFF_RT_RD_BASE-UNIT_REG_BASE)*2)
 
 /*
 *All clauses is 256,but the buff is too less to assigned
 *so,the number of clauses is CIR_RD_CLAUSES
 */
-#define BUFF_CIR_RD_BASE	(BUFF_ADDR_BASE+BUFF_RT_RD_SIZE)
-#define BUFF_CIR_RD_SIZE	32
-#define CIR_RD_CLAUSES		((BUFF_SIZE-BUFF_RT_RD_SIZE)*2/BUFF_CIR_RD_SIZE)
-
-#define REG_RD_CIR_BASE   	(UNIT_REG_BASE+0x100)
-#define REG_RD_CIR_EN		(UNIT_REG_BASE+0x40)
+/*circle read buffer base addr*/
+#define BUFF_CIR_RD_BASE		(BUFF_ADDR_BASE+BUFF_RT_RD_SIZE)
+/*buff addr used in read control reg*/
+#define DATABUFF_CIR_RD_BASE		((BUFF_CIR_RD_BASE-UNIT_REG_BASE)*2)
+/*every circle read buf size*/
+#define BUFF_CIR_RD_SIZE		32
+/*the max number of clauses*/
+#define CIR_RD_CLAUSES			((BUFF_SIZE-BUFF_RT_RD_SIZE)*2/BUFF_CIR_RD_SIZE)
+/*circle read control base addr*/
+#define CIR_RD_CTRL_BASE   		(UNIT_REG_BASE+0x100)
+/*circle read enable base addr*/
+#define CIR_RD_EN_BASE			(UNIT_REG_BASE+0x40)
 
 struct ic_oper_para clauses_map[CIR_RD_CLAUSES];
 
 int fpga_rm_cir_rd_en(int clause, int en)
 {
 	int en_addr,en_bit;
-	unsigned int data;
+	unsigned int data, delay_count = 1000;
 
 	if((clause > CIR_RD_CLAUSES)||((en<0) || (en >1)))
 	{
 		printf("clause is bigger than 220\n");
 		return -1;
 	}
-	en_addr = clause/16;
+	en_addr = CIR_RD_EN_BASE + clause/16;
 	en_bit  = clause%16;
         if (lseek(fpga_dev, en_addr, SEEK_SET) != en_addr) {
                 printf("lseek error.\n");
                 return -1;
         }
-	read(fpga_dev, &data, WORDSIZE);
+	do{
+		read(fpga_dev, &data, WORDSIZE);
+		if(((data & 0xffff) == 0)||(delay_count<1))
+			break;
+	}while(delay_count--);
 	if(en == 1)
 		data |= 1<< en_bit;
 	else
@@ -155,8 +154,8 @@ int fpga_rm_cir_rd_set(int clause, struct ic_oper_para *oper)
         clauses_map[clause].len = oper->len;
 
         count = oper->len;
-        bufaddr = BUFF_CIR_RD_BASE + (clause*BUFF_CIR_RD_SIZE)/2;
-        read_reg = REG_RD_CIR_BASE + clause;
+        bufaddr = DATABUFF_CIR_RD_BASE + clause*BUFF_CIR_RD_SIZE;
+        read_reg = CIR_RD_CTRL_BASE + clause;
         if(count <= 16)
         {
                 mode = 2;
@@ -189,7 +188,10 @@ int fpga_rm_cir_rd(int clause, struct ic_oper_para *oper)
 {
         unsigned char data[WORDSIZE] = {0}, mode;
 	int i = 0, count;
-	unsigned int buf_addr;
+	unsigned int reg_addr;
+	int en_addr,en_bit;
+        unsigned int delay_count = 1000;
+	unsigned int value_en;
 
         if((clause < 0)||(clause >= CIR_RD_CLAUSES))
                 return -1;
@@ -205,13 +207,26 @@ int fpga_rm_cir_rd(int clause, struct ic_oper_para *oper)
                 return -1;
         }
 
+        en_addr = CIR_RD_EN_BASE + clause/16;
+        en_bit  = clause%16;
+        if (lseek(fpga_dev, en_addr, SEEK_SET) != en_addr) {
+                printf("lseek error.\n");
+                return -1;
+        }
+        do{
+                read(fpga_dev, &value_en, WORDSIZE);
+                if(((value_en&(1 << en_bit)) == 0)||(delay_count<1))
+                        break;
+        }while(delay_count--);
+
+
 	count = oper->len;
-	buf_addr = BUFF_CIR_RD_BASE + clause * BUFF_CIR_RD_SIZE;
+	reg_addr = BUFF_CIR_RD_BASE + clause * BUFF_CIR_RD_SIZE/2;
 	
 	pthread_mutex_lock(&mutex_cir);
         for(i = 0; i<(count/2 + count%2); i++)
         {
-	        if (lseek(fpga_dev, (buf_addr+i), SEEK_SET) != (buf_addr + 1)) {
+	        if (lseek(fpga_dev, (reg_addr + i), SEEK_SET) != (reg_addr + i)) {
         	        printf("lseek error.\n");
 			return -1;
         	}
@@ -231,8 +246,9 @@ int fpga_rm_rt_rd(unsigned char slot, unsigned short addr, unsigned short *wdata
         unsigned char data[WORDSIZE] = {0}, mode;
         unsigned int read_flag = 0, i = 0;
         unsigned int delay_count = 1000;
-        unsigned short bufaddr = BUFF_RT_BASE;
+        unsigned short bufaddr;
 
+        bufaddr = DATABUFF_RT_RD_BASE;
         if(count <= 16)
         {
                 mode = 2;
