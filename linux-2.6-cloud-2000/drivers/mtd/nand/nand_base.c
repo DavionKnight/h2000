@@ -2933,6 +2933,11 @@ static struct nand_flash_dev *nand_get_flash_type(struct mtd_info *mtd,
 
 	/* Get chip options, preserve non chip based options */
 	chip->options &= ~NAND_CHIPOPTIONS_MSK;
+
+        /*Add by zhangjj 2015-8-6*/
+         chip->options |= NAND_NO_SUBPAGE_WRITE;        /*close subpage write mode to compatibale K9K8G08U0B with K9K8G08U0E*/
+        /*add end*/
+
 	chip->options |= type->options & NAND_CHIPOPTIONS_MSK;
 
 	/*
