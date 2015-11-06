@@ -224,88 +224,10 @@ int idt285_write(unsigned char slot_num, unsigned short addr, unsigned char data
 	return 0;
 }
 
-int dpll_idt285_init(unsigned char slot)
-{
-	FILE *fp;
-	char reg_buf[20];
-	char *fret = NULL;
-	unsigned short regaddr;
-	unsigned char val,data;
-
-//285 reset
-unsigned short wdata = 0;
-fpga_write_once(slot, IDT285_RESET, &wdata);
-usleep(10000);
-wdata = 1;
-fpga_write_once(slot, IDT285_RESET, &wdata);
-usleep(1000000);
-//reset done
-
-	if((fp = fopen("idt285_Reg.txt","r")) == NULL)
-	{
-		printf("Open idt285_Reg.txt error\n");
-		return -1;
-	}
-
-	//fgets will stop when line break
-	fret = fgets(reg_buf,20,fp);
-	while(!feof(fp))
-	{
-		sscanf(reg_buf,"%hx:%hhx",&regaddr,&val);
-		if(regaddr > 0x7)
-		{
-//if(regaddr<50)
-//{
-//		printf("%s\n",reg_buf);
-//			printf("Write:%02x %02x\n",regaddr,val);
-//}
-			idt285_write(slot, regaddr, val);
-			usleep(10);
-			idt285_read(slot, regaddr,&data);
-//if(regaddr<50)
-//			printf("Read:%02x %02x\n",regaddr,data);
-		}
-		memset(reg_buf,0,20);
-		fret = fgets(reg_buf,20,fp);
-	}
-
-	fclose(fp);
-	
-#if 1
-	unsigned short addr,i;
-	for(i = 0;i<0x317;i++)
-	{
-		addr = i;
-		idt285_read(slot,addr,&data);
-		printf("0x%02x ",data);
-		if((i+1)%16)
-		;
-		else
-		printf("\n");
-		usleep(10);
-	}
-	printf("\n");
-#endif
-	
-#if 0
-	addr = 0x3;
-	idt285_read(addr,&data);
-
-	printf("Read Reg:0x%x = 0x%x=================1\n",addr,data);
-	addr = 0x3;
-	data = 0x60;
-	idt285_write(addr,data);
-	printf("Write Reg:0x%x = 0x%x================2\n",addr,data);
-	addr = 0x3;
-	idt285_read(addr,&data);
-
-	printf("Read Reg:0x%x = 0x%x=================3\n",addr,data);
-#endif
-	return 0;
-}
 
 int main(int argc, char *argv[])
 {
+#if 0
 	int ret = 0;
 	unsigned short addr = 0;
 	unsigned char data = 0, slot_num = 0;
@@ -323,11 +245,39 @@ int main(int argc, char *argv[])
 	}
 	slot_num = argv[1][0]-'0';
 	printf("slot_num = %d\n",slot_num);
+#endif
+        int ret = 0;
+        unsigned char addr = 0,data;
+        unsigned char slot_num = 0;
+        int i = 0;
 
-	fpga_init();
-	
-	dpll_idt285_init(slot_num);	
+        fpga_init();
 
+        if (argc == 4 && argv[1][0] == 'r') {
+                sscanf(argv[2], "%hhx", &slot_num);
+                sscanf(argv[3], "%hhx", &addr);
+#if 0
+                printf("0 %s\n",argv[0]);
+                printf("1 %s\n",argv[1]);
+                printf("2 %s\n",argv[2]);
+#endif
+                printf("slot num %x addr 0x%04x:\n", slot_num, (unsigned short)addr);
+                idt285_read(slot_num,addr,&data);
+                printf("The result:\n0x%02x\n",data);
+        }
+        else if (argc == 5 && argv[1][0] == 'w') {
+                sscanf(argv[2], "%hhx", &slot_num);
+                sscanf(argv[3], "%hhx", &addr);
+                sscanf(argv[4], "%hhx", &data);
+                printf("slot num %x,write addr 0x%d data 0x%02x:\n", slot_num,addr,data);
+        //        fpga_write_once(slot_num, addr, &data);
+		idt285_write(slot_num, addr, data);
+        }
+        else
+        {
+                printf("idt285 read <slot:hex> <addr:hex>\n");
+		printf("idt285 write <slot:hex> <addr:hex> <data:hex>\n");
+	}
 END:
 	fpga_close();
 	return 0;	
