@@ -219,6 +219,16 @@ int fsl_espi_setup_transfer(struct spi_device *spi, struct spi_transfer *t)
 	out_be32(&fsl_espi->regs->mode, regval);
 	local_irq_restore(flags);
 
+//      regval = in_be32(&fsl_espi->regs->mode);
+//      printk("mode=0x%x\n",fsl_espi->regs->mode);
+ //     regval = in_be32(&fsl_espi->regs->csmode[0]);
+//      printk("csmode0=0x%x\n",fsl_espi->regs->csmode[0]);
+//      regval = in_be32(&fsl_espi->regs->csmode[1]);
+//      printk("csmode1=0x%x\n",fsl_espi->regs->csmode[1]);
+//      regval = in_be32(&fsl_espi->regs->csmode[2]);
+//      printk("csmode2=0x%x\n\n",fsl_espi->regs->csmode[2]);
+
+
 	return 0;
 }
 
@@ -234,7 +244,7 @@ static int fsl_espi_bufs(struct spi_device *spi, struct spi_transfer *t)
 
 //	fsl_espi->tx_shift = 8;
 //	fsl_espi->rx_shift = 8;
-	spi->max_speed_hz = 2000000;
+//	spi->max_speed_hz = 2000000;
 	//spi->chip_select = 0 ;// 0 fpga 1 dpll
 	spi->mode |=  SPI_CPHA | SPI_CPOL | SPI_CS_HIGH;
 	fsl_espi_setup_transfer(spi, NULL);
