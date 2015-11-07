@@ -201,8 +201,12 @@ int fsl_espi_setup_transfer(struct spi_device *spi, struct spi_transfer *t)
 		}
 	} else {
 		pm = fsl_espi->spibrg / (hz * 2);
+/*delete by zhangjj 2015-11-12 change spi max HZ*/
+#if 0
 		if (pm < CSMODE_PM_MIN)
 			pm = CSMODE_PM_MIN;
+#endif
+/*delete end*/
 	}
 	cs->hw_mode |= CSMODE_PM(pm);
 

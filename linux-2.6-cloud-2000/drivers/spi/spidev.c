@@ -1471,7 +1471,7 @@ static int __devinit spidev_probe(struct spi_device *spi)
 	{
 		unsigned char data[2]={0, 0};//used to test suxq fun
 	
-		spi->max_speed_hz = 2000000;
+		spi->max_speed_hz = 7000000;
 		spi->chip_select =  2;// 0 fpga 1 dpll
 		spi->mode =  SPI_MODE_3;
 		spi_setup(spi);
