@@ -436,7 +436,7 @@ int dpll_spi_write(unsigned short addr, unsigned char *data, size_t count)
 	//mutex_lock(&chip_sel_lock);
 #endif
 	  spi->chip_select = 1; // 0 fpga 1 dpll
-		   spi_setup(spi);
+//		   spi_setup(spi);
 	       chip_select = DS31400_CHIP;
 
 //	mutex_lock(&spidev->buf_lock);	
@@ -485,7 +485,7 @@ int dpll_spi_read(unsigned short addr, unsigned char *data, size_t count)
 #if 1
 	//mutex_lock(&chip_sel_lock);
 	  spi->chip_select = 1; // 0 fpga 1 dpll
-           spi_setup(spi);
+//           spi_setup(spi);
 	  chip_select = DS31400_CHIP
 	  	;
 #endif	
@@ -549,7 +549,7 @@ int fpga_spi_write(unsigned short addr, unsigned char *data, size_t count)
 	//mutex_lock(&chip_sel_lock);
 #endif
 	  spi->chip_select = 0; // 0 fpga 1 dpll
-		   spi_setup(spi);
+//		   spi_setup(spi);
 	       chip_select = FPGA_CHIP;
 
 //	mutex_lock(&spidev->buf_lock);	
@@ -597,7 +597,7 @@ int fpga_spi_read(unsigned short addr, unsigned char *data, size_t count)
 #endif
 	//mutex_lock(&chip_sel_lock);
 	  spi->chip_select = 0; // 0 fpga 1 dpll
-           spi_setup(spi);
+//           spi_setup(spi);
 	  chip_select = FPGA_CHIP;
 	
     //mutex_lock(&spidev->buf_lock);	
@@ -1187,14 +1187,14 @@ spidev_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	       mutex_lock(&chip_sel_lock);
 
 	       spi->chip_select = 0; // 0 fpga 1 dpll
-		   spi_setup(spi);
+//		   spi_setup(spi);
 	       chip_select = FPGA_CHIP;
 
 		retval = 0;
 	       break;
 	case SPI_IOC_OPER_FPGA_DONE:
 		spi->chip_select = 1; // 0 fpga 1 dpll
-		spi_setup(spi);
+//		spi_setup(spi);
 	    chip_select = DS31400_CHIP;
 		retval = 0;
 		mutex_unlock(&chip_sel_lock);
@@ -1203,13 +1203,13 @@ spidev_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	case SPI_IOC_OPER_DPLL:
 	       mutex_lock(&chip_sel_lock);
 	       spi->chip_select = 1; // 0 fpga 1 dpll
-		   spi_setup(spi);
+//		   spi_setup(spi);
 	       chip_select = DS31400_CHIP;
 	       retval = 0;
 	       break;
 	case SPI_IOC_OPER_DPLL_DONE:
 		spi->chip_select = 0; // 0 fpga 1 dpll
-		spi_setup(spi);
+//		spi_setup(spi);
 	    chip_select = FPGA_CHIP;
 		mutex_unlock(&chip_sel_lock);
 		retval=0;
@@ -1471,7 +1471,7 @@ static int __devinit spidev_probe(struct spi_device *spi)
 	{
 		unsigned char data[2]={0, 0};//used to test suxq fun
 	
-		spi->max_speed_hz = 7000000;
+		spi->max_speed_hz = 6500000;	//the real rate 6.25M
 		spi->chip_select =  2;// 0 fpga 1 dpll
 		spi->mode =  SPI_MODE_3;
 		spi_setup(spi);

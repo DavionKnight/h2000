@@ -294,6 +294,10 @@ static void bitbang_work(struct work_struct *work)
 
 		list_for_each_entry (t, &m->transfers, transfer_list) {
 
+	        	/*do not setup, all slave dev use the same configs -add by zhangjj 2015-11-26*/
+        		do_setup = 0;
+                        /*add end*/ 
+
 			/* override speed or wordsize? */
 			if (t->speed_hz || t->bits_per_word ||
 					spi->bits_per_word)

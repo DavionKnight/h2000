@@ -246,8 +246,8 @@ static int fsl_espi_bufs(struct spi_device *spi, struct spi_transfer *t)
 //	fsl_espi->rx_shift = 8;
 //	spi->max_speed_hz = 2000000;
 	//spi->chip_select = 0 ;// 0 fpga 1 dpll
-	spi->mode |=  SPI_CPHA | SPI_CPOL | SPI_CS_HIGH;
-	fsl_espi_setup_transfer(spi, NULL);
+//	spi->mode |=  SPI_CPHA | SPI_CPOL | SPI_CS_HIGH;
+//	fsl_espi_setup_transfer(spi, NULL);
 
 	fsl_espi->tx = t->tx_buf;
 	fsl_espi->rx = t->rx_buf;
@@ -275,6 +275,9 @@ static int fsl_espi_bufs(struct spi_device *spi, struct spi_transfer *t)
 	//printk(" word  = 0x%08x , conut = 0x%08x,  fsl_espi->rx_shift = 0x%08x,,        fsl_espi->tx_shift= 0x%08x,,\n", word,fsl_espi->count , fsl_espi->rx_shift,   fsl_espi->tx_shift);
 
 	wait_for_completion(&fsl_espi->done);
+	/* disable rx ints */
+	out_be32(&fsl_espi->regs->mask, 0);
+
 #if 0
 	{
 			int i;
@@ -391,14 +394,19 @@ irqreturn_t fsl_espi_irq(s32 irq, void *context_data)
 		out_be32(&fsl_espi->regs->transmit, word);
 	} else {
 		fsl_espi->count = 0;
+#if 0
 		/* disable rx ints */
 		out_be32(&fsl_espi->regs->mask, 0);
+#else
+                /* Clear the events */
+                out_be32(&fsl_espi->regs->event, event);
+#endif
 		complete(&fsl_espi->done);
 	}
-
+#if 0
 	/* Clear the events */
 	out_be32(&fsl_espi->regs->event, event);
-
+#endif
 	return IRQ_HANDLED;
 }
 

@@ -47,6 +47,21 @@ static int __init rtc_hctosys(void)
 
 	}
 
+#if 1   /* if rtc time is invalid, set systime 2000-1-1 0:0:0 --add by zhangjj 2015-11-30*/
+        if(tm.tm_year < 70)
+        {
+                printk("Rtc invalid, reset to 2000-1-1 0:0:0\n");
+                tm.tm_year = 100;
+                tm.tm_mon = 1;
+                tm.tm_mday = 1;
+                tm.tm_hour = 0;
+                tm.tm_min = 0;
+                tm.tm_sec = 0;
+        }
+        rtc_set_time(rtc, &tm); //if short circuit rtc, rtc will not run until we reset it
+#endif
+
+
 	err = rtc_valid_tm(&tm);
 	if (err) {
 		dev_err(rtc->dev.parent,
