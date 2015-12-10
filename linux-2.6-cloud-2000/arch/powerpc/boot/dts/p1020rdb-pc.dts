@@ -321,26 +321,16 @@
 			compatible = "fsl,etsec2-mdio";
 			reg = <0x24000 0x1000 0xb0030 0x4>;
 
-			phy0: ethernet-phy@0 {
+						phy0: ethernet-phy@0 {
 				interrupt-parent = <&mpic>;
 				interrupts = <3 1>;
 				reg = <0x0>;
 			};
 
-			phy1: ethernet-phy@1 {
-				interrupt-parent = <&mpic>;
-				interrupts = <2 1>;
-				reg = <0x1>;
-			};
-			phy2: ethernet-phy@2 {
-				interrupt-parent = <&mpic>;
-				interrupts = <1 1>;
-				reg = <0x1e>;
-			};
 		};
 
 		mdio@25000 {
-			#address-cells = <2>;
+			#address-cells = <1>;
 			#size-cells = <0>;
 			compatible = "fsl,etsec2-tbi";
 			reg = <0x25000 0x1000 0xb1030 0x4>;
@@ -355,12 +345,13 @@
 			#size-cells = <0>;
 			compatible = "fsl,etsec2-mdio";
 			reg = <0x26000 0x1000 0xb2030 0x4>;
-
-			phy3: ethernet-phy@3 {
+			
+			phy2: ethernet-phy@2 {
 				interrupt-parent = <&mpic>;
-				interrupts = <4 1>;
-				reg = <0x21>;
+				interrupts = <2 1>;
+				reg = <0x2>;
 			};
+
 		};
 		ptp_timer: ptimer@b0e00 {
 			compatible = "fsl,gianfar-ptp-timer";
@@ -451,7 +442,7 @@
 			local-mac-address = [ 00 00 00 00 00 00 ];
 			interrupt-parent = <&mpic>;
 			/*phy-handle = <&phy5>;*/ 
-			fixed-link = <1 1 1000 0 0>;
+			fixed-link = <2 2 1000 0 0>;
 			phy-connection-type = "rgmii-id";
 
 			/*ptimer-handle = <&ptp_timer>; */
