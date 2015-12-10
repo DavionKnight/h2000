@@ -70,23 +70,30 @@
 
 			partition@0 {
 				/* This location must not be altered  */
-				/* 4MB for u-boot Bootloader Image */
-				reg = <0x0 0x00400000>;
-				label = "NAND (RO) U-Boot Image";
+				/* 2MB for u-boot Bootloader Image */
+				reg = <0x0 0x00200000>;
+				label = "U-Boot";
 				read-only;
 			};
+
+			partition@200000 {
+                                 /* 2MB for u-boot env */
+                                 reg = <0x00200000 0x00200000>;
+                                 label = "U-Boot Env";
+                                 read-only;
+                         };
 
 			partition@400000  {
 				/* 4MB for env  Image */
 				reg = <0x00400000 0x01400000 >;
-				label = "NAND (RO) DTB Image";
+				label = "KRD Image";
 				//read-only;
 			};
 
 			partition@1800000  {
 				/* 4MB for Linux Kernel Image */
 				reg = < 0x01800000 0x3e800000>;
-				label = "NAND (RO) Linux Kernel Image";
+				label = "Application";
 				//read-only;
 			};
 
