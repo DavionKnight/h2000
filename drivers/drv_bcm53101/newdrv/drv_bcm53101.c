@@ -250,6 +250,7 @@ int bcm53101_fs_read(struct file *filp, char __user *buf, size_t count, loff_t *
 #define BCM53101_A 0
 #define BCM53101_B 1
 #define BCM53101_GPIO_SEL	8
+#define BCM53101_GPIO_SEL1	13
 
 static long bcm53101_fs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
@@ -260,10 +261,12 @@ static long bcm53101_fs_ioctl(struct file *filp, unsigned int cmd, unsigned long
         {
                 case BCM53101_A:
         		gpio_direction_output(BCM53101_GPIO_SEL, BCM53101_A);
+        		gpio_direction_output(BCM53101_GPIO_SEL1, 0);
                         break;
 
                 case BCM53101_B:
 		        gpio_direction_output(BCM53101_GPIO_SEL, BCM53101_B);
+		        gpio_direction_output(BCM53101_GPIO_SEL1, 0);
                         break;
                 default:
                  retval = -EINVAL;
@@ -318,6 +321,7 @@ int bcm53101_cfg_init()
 	}
 #endif
 	gpio_direction_output(BCM53101_GPIO_SEL, BCM53101_A);
+	gpio_direction_output(BCM53101_GPIO_SEL1, 0);
 
 	//set IMP port enable 
 	memset(mdio_val, 0, sizeof(mdio_val));

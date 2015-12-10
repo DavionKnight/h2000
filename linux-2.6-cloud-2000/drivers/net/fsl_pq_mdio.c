@@ -50,6 +50,7 @@
 #include <linux/proc_fs.h>
 #include <linux/sched.h>
 #include <asm/uaccess.h>
+#include <linux/gpio.h>
 
 struct mii_bus *new_bus;
 /*end*/
@@ -229,11 +230,11 @@ static int fsl_pq_mdio_find_free(struct mii_bus *new_bus)
 			return -1;
 		}
 		printk("new_bus->id=%s\n",new_bus->id);
+				printk("phyaddr = %d,phy_id = %d\n",i,phy_id);
 		if(!strcasecmp(new_bus->id,"mdio@ffe26000"))
 		{
 			if(2==i)
 			{
-				printk("phyaddr = %d,phy_id = %d\n",i,phy_id);
 				phy_id = 30;
 				printk("phyaddr = %d,phy_id = %d\n",i,phy_id);
 				break;
@@ -308,8 +309,146 @@ static int get_ucc_id_for_range(u64 start, u64 end, u32 *ucc_id)
 		return -EINVAL;
 }
 #endif
+#define BCM53101_C
+#ifdef BCM53101_C
+#define PSEPHY_ACCESS_CTRL      16
+#define PSEPHY_RDWR_CTRL        17
+#define PSEPHY_ACCESS_REG1      24
+#define PSEPHY_ACCESS_REG2      25
+#define PSEPHY_ACCESS_REG3      26
+#define PSEPHY_ACCESS_REG4      27
+
+#define PSEDOPHY                30
+#define PHY0                    0
+#define PHY1                    1
+#define PHY2                    2
+#define PHY3                    3
+#define PHY4                    4
+
+#define ACCESS_EN               1
+
+#define OPER_RD 0x2
+#define OPER_WR 0x1
 
 
+int bcm_fsl_mdio_read(int mii_id, unsigned short addr, unsigned short *val)
+{
+        int ret = 0;
+
+        if(NULL == preg)
+        {
+                printk("preg is NULL\n");
+                return -1;
+        }
+
+        ret = fsl_pq_local_mdio_read(preg, mii_id, addr);
+        *val = ret & 0xffff;
+
+        return 0;
+
+}
+
+int bcm_fsl_mdio_write(int mii_id, unsigned short addr, unsigned short val)
+{
+        int ret = 0;
+
+        if(NULL == preg)
+        {
+                printk("preg is NULL\n");
+                return -1;
+        }
+
+        ret = fsl_pq_local_mdio_write(preg, mii_id, addr, val);
+
+        return ret;
+}
+
+int bcm53101_c_write(unsigned char page, unsigned char addr, unsigned short *value)
+{
+        unsigned short mdio_val = 0;
+        unsigned short ret_val = 0, s_count = 0xffff;
+        int mii_id = 0;
+
+        if(((page >= 0x10) && (page <= 0x14))||(page == 0x17))//get real port phy addr
+        {
+                mii_id = page - 0x10;
+//              printk("mii_id=%d\n",mii_id);
+                bcm_fsl_mdio_write(mii_id, addr/2, value[0]);
+        }
+        else                            //get psedophy addr
+        {
+                mii_id = PSEDOPHY;
+//              printk("mii_id=%d\n",mii_id);
+                page &= 0xff;
+                mdio_val |= (page << 8);
+                mdio_val |= ACCESS_EN;
+
+                bcm_fsl_mdio_write(mii_id, PSEPHY_ACCESS_CTRL,mdio_val);
+
+                bcm_fsl_mdio_write(mii_id, PSEPHY_ACCESS_REG1,value[0]);
+                bcm_fsl_mdio_write(mii_id, PSEPHY_ACCESS_REG2,value[1]);
+                bcm_fsl_mdio_write(mii_id, PSEPHY_ACCESS_REG3,value[2]);
+                bcm_fsl_mdio_write(mii_id, PSEPHY_ACCESS_REG4,value[3]);
+
+                mdio_val = 0;
+                mdio_val |= addr << 8;
+                mdio_val |= OPER_WR;
+                bcm_fsl_mdio_write(mii_id, PSEPHY_RDWR_CTRL,mdio_val);
+
+//      msleep(1);      
+                do
+                {
+                        bcm_fsl_mdio_read(mii_id, PSEPHY_RDWR_CTRL, &mdio_val);
+                        if(!(mdio_val&0x11))
+                                break;
+                        s_count --;
+        //              msleep(1);
+                }while(s_count > 0);
+        }
+        return 0;
+}
+
+
+int BCM53101_C_init()
+{
+	unsigned short mdio_val[4] = {0};
+
+        gpio_direction_output(8, 1);
+        gpio_direction_output(13, 1);
+
+        //set IMP port enable 
+        memset(mdio_val, 0, sizeof(mdio_val));
+        mdio_val[0] = 0x80;
+        bcm53101_c_write(2, 0x0, mdio_val);
+
+        //set IMP port receive uni/multi/broad cast enable 
+        memset(mdio_val, 0, sizeof(mdio_val));
+        mdio_val[0] = 0x1c;
+        bcm53101_c_write(0, 0x08, mdio_val);
+
+        //disable broad header for IMP port
+        memset(mdio_val, 0, sizeof(mdio_val));
+        mdio_val[0] = 0x0;
+        bcm53101_c_write(2, 0x03, mdio_val);
+
+        //set Switch Mode forwarding enable and managed mode
+        memset(mdio_val, 0, sizeof(mdio_val));
+        mdio_val[0] = 0x3;
+        bcm53101_c_write(0, 0x0b, mdio_val);
+
+        //set IMP Port State 1000M duplex and Link pass
+        memset(mdio_val, 0, sizeof(mdio_val));
+        mdio_val[0] = 0x8b;
+        bcm53101_c_write(0, 0x0e, mdio_val);
+
+        //set IMP RGMII RX/TX clock delay enable
+        memset(mdio_val, 0, sizeof(mdio_val));
+        mdio_val[0] = 0x3;
+        bcm53101_c_write(0, 0x60, mdio_val);
+
+	return 0;
+}
+#endif
 static int fsl_pq_mdio_probe(struct of_device *ofdev,
 		const struct of_device_id *match)
 {
@@ -323,7 +462,7 @@ static int fsl_pq_mdio_probe(struct of_device *ofdev,
 	const u32 *addrp;
 	u64 addr = 0, size = 0;
 	int err;
-
+printk("fsl_pq_mdio_probe..\n");
 	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
 	if (!priv)
 		return -ENOMEM;
@@ -345,7 +484,6 @@ static int fsl_pq_mdio_probe(struct of_device *ofdev,
 		err = -EINVAL;
 		goto err_free_bus;
 	}
-printk("addrp=0x%x\n\n",addrp);
 	/* Set the PHY base address */
 	addr = of_translate_address(np, addrp);
 	if (addr == OF_BAD_ADDR) {
@@ -456,6 +594,15 @@ printk("addrp=0x%x\n\n",addrp);
 	{
 		printk("$$$$$$$$$$$$$ bus->id = %s\n", new_bus->id);
 		preg = fsl_pq_mdio_get_regs(new_bus);
+#ifdef BCM53101_C
+		struct device *dev_n = &ofdev->dev;
+		err = gpio_request(13, dev_name(dev_n));
+		if (err) {
+			dev_err(dev_n, "can't request gpio #%d: %d\n", 13, err);
+		}
+		
+		BCM53101_C_init();
+#endif
 	}
 /*add end*/
 

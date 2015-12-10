@@ -335,7 +335,7 @@
 			phy2: ethernet-phy@2 {
 				interrupt-parent = <&mpic>;
 				interrupts = <1 1>;
-				reg = <0x7>;
+				reg = <0x1e>;
 			};
 		};
 
@@ -359,7 +359,7 @@
 			phy3: ethernet-phy@3 {
 				interrupt-parent = <&mpic>;
 				interrupts = <4 1>;
-				reg = <0x1e>;
+				reg = <0x21>;
 			};
 		};
 		ptp_timer: ptimer@b0e00 {
@@ -384,10 +384,10 @@
 			clk-handle = <&etsec1_clk>;
 			local-mac-address = [ 00 00 00 00 00 00 ];
 			interrupt-parent = <&mpic>;
-			/*fixed-link = <1 1 1000 0 0>;*/
-			phy-handle = <&phy2>;
+			fixed-link = <1 1 1000 0 0>;
+			/* phy-handle = <&phy2>; */
 			phy-connection-type = "rgmii-id";
-			ptimer-handle = <&ptp_timer>;
+			/* ptimer-handle = <&ptp_timer>; */
 
 			queue-group@0 {
 				#address-cells = <1>;
