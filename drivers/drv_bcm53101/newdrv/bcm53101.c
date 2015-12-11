@@ -69,19 +69,19 @@ int main(int argc, char *argv[])
 	}
 	else if (argc == 3 && argv[1][0] == 's') {
 		sscanf(argv[2], "%hx", &data);
-		if(data>1)
+		if(data>2)
 			printf("para error\n");
 		else
 		{
 			ioctl(bcmfd, data, 0); 
-	                printf("\n+++++Select BCM53101_%c********\n\n", data?'B':'A');
+	                printf("\n+++++Select BCM53101_%c********\n\n", data==1?'B':data?'C':'A');
 		}
 	}
 	else
 	{
 		printf("bcm53101 read <page:hex> <addr:hex>\n");
 		printf("bcm53101 write <page:hex> <addr:hex> <data:hex>\n");
-		printf("bcm53101 select [0/1] \n");
+		printf("bcm53101 select [0/1/2] \n");
 	}
 	
 	close(bcmfd);

@@ -249,6 +249,7 @@ int bcm53101_fs_read(struct file *filp, char __user *buf, size_t count, loff_t *
 
 #define BCM53101_A 0
 #define BCM53101_B 1
+#define BCM53101_C 2
 #define BCM53101_GPIO_SEL	8
 #define BCM53101_GPIO_SEL1	13
 
@@ -265,8 +266,12 @@ static long bcm53101_fs_ioctl(struct file *filp, unsigned int cmd, unsigned long
                         break;
 
                 case BCM53101_B:
-		        gpio_direction_output(BCM53101_GPIO_SEL, BCM53101_B);
+		        gpio_direction_output(BCM53101_GPIO_SEL, 1);
 		        gpio_direction_output(BCM53101_GPIO_SEL1, 0);
+                        break;
+                case BCM53101_C:
+		        gpio_direction_output(BCM53101_GPIO_SEL, 1);
+		        gpio_direction_output(BCM53101_GPIO_SEL1, 1);
                         break;
                 default:
                  retval = -EINVAL;
@@ -321,7 +326,7 @@ int bcm53101_cfg_init()
 	}
 #endif
 	gpio_direction_output(BCM53101_GPIO_SEL, BCM53101_A);
-	gpio_direction_output(BCM53101_GPIO_SEL1, 0);
+//	gpio_direction_output(BCM53101_GPIO_SEL1, 0);
 
 	//set IMP port enable 
 	memset(mdio_val, 0, sizeof(mdio_val));
@@ -333,15 +338,10 @@ int bcm53101_cfg_init()
 	mdio_val[0] = 0x1c;
 	bcm53101_write(0, 0x08, mdio_val);
 
-	//disable broad header for IMP port
+	//disable broadcom header for IMP port
 	memset(mdio_val, 0, sizeof(mdio_val));
 	mdio_val[0] = 0x0;
 	bcm53101_write(2, 0x03, mdio_val);
-
-	//set Switch Mode forwarding enable and managed mode
-	memset(mdio_val, 0, sizeof(mdio_val));
-	mdio_val[0] = 0x3;
-	bcm53101_write(0, 0x0b, mdio_val);
 
 	//set IMP Port State 1000M duplex and Link pass
 	memset(mdio_val, 0, sizeof(mdio_val));
@@ -352,6 +352,16 @@ int bcm53101_cfg_init()
 	memset(mdio_val, 0, sizeof(mdio_val));
 	mdio_val[0] = 0x3;
 	bcm53101_write(0, 0x60, mdio_val);
+
+	memset(mdio_val, 0, sizeof(mdio_val));
+	mdio_val[0] = 0x3;
+	bcm53101_read(0, 0x0b, mdio_val);
+	printk("value:0x%x\n",mdio_val);
+
+	//set Switch Mode forwarding enable and managed mode
+	memset(mdio_val, 0, sizeof(mdio_val));
+	mdio_val[0] = 0x3;
+	bcm53101_write(0, 0x0b, mdio_val);
 
 	return 0;
 }
@@ -364,6 +374,9 @@ static int __init bcm53101_init(void)
 	dev_t dev_id;
 
      	printk(KERN_ALERT "BCM53101 driver init...");
+
+	gpio_direction_output(BCM53101_GPIO_SEL, BCM53101_A);
+        gpio_direction_output(BCM53101_GPIO_SEL1, 0);
 
 	alloc_chrdev_region(&dev_id, 0, 1, "bcm53101");
 	major = MAJOR(dev_id);

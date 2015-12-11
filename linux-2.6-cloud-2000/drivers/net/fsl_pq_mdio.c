@@ -226,17 +226,13 @@ static int fsl_pq_mdio_find_free(struct mii_bus *new_bus)
 
 		if (get_phy_id(new_bus, i, &phy_id))
 		{
-			printk("phyaddr = %d,phy_id = %d\n",i,phy_id);
 			return -1;
 		}
-		printk("new_bus->id=%s\n",new_bus->id);
-				printk("phyaddr = %d,phy_id = %d\n",i,phy_id);
 		if(!strcasecmp(new_bus->id,"mdio@ffe26000"))
 		{
 			if(2==i)
 			{
 				phy_id = 30;
-				printk("phyaddr = %d,phy_id = %d\n",i,phy_id);
 				break;
 			}
 		}
@@ -462,7 +458,6 @@ static int fsl_pq_mdio_probe(struct of_device *ofdev,
 	const u32 *addrp;
 	u64 addr = 0, size = 0;
 	int err;
-printk("fsl_pq_mdio_probe..\n");
 	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
 	if (!priv)
 		return -ENOMEM;
@@ -589,10 +584,8 @@ printk("fsl_pq_mdio_probe..\n");
 		goto err_free_irqs;
 	}
 /*add by zhangjj 2015-10-15*/
-	printk("\n\np new_bus->id=%s\n",new_bus->id);
 	if(!strcasecmp(new_bus->id,"mdio@ffe24000"))
 	{
-		printk("$$$$$$$$$$$$$ bus->id = %s\n", new_bus->id);
 		preg = fsl_pq_mdio_get_regs(new_bus);
 #ifdef BCM53101_C
 		struct device *dev_n = &ofdev->dev;
