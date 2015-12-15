@@ -409,6 +409,10 @@ int BCM53101_C_init()
 {
 	unsigned short mdio_val[4] = {0};
 
+        gpio_direction_output(5, 0);
+	msleep(10);
+        gpio_direction_output(5, 1);
+
         gpio_direction_output(8, 1);
         gpio_direction_output(13, 1);
 
@@ -592,6 +596,10 @@ static int fsl_pq_mdio_probe(struct of_device *ofdev,
 		err = gpio_request(13, dev_name(dev_n));
 		if (err) {
 			dev_err(dev_n, "can't request gpio #%d: %d\n", 13, err);
+		}
+		err = gpio_request(5, dev_name(dev_n));
+		if (err) {
+			dev_err(dev_n, "can't request gpio #%d: %d\n", 5, err);
 		}
 		
 		BCM53101_C_init();
