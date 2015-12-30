@@ -46,21 +46,22 @@ static int __init rtc_hctosys(void)
 		goto err_read;
 
 	}
-
-#if 1   /* if rtc time is invalid, set systime 2000-1-1 0:0:0 --add by zhangjj 2015-11-30*/
-        if(tm.tm_year < 70)
+	//printk("\n\n----------------------aa setting system clock to %d-%02d-%02d %02d:%02d:%02d UTC ---------\n\n",tm.tm_year , tm.tm_mon + 1, tm.tm_mday,tm.tm_hour, tm.tm_min, tm.tm_sec);
+#if 1	/* if rtc time is invalid, set systime 2016-1-1 0:0:0 --add by zhangjj 2015-12-30*/
+        if(tm.tm_year < 100||tm.tm_year > 150)
         {
-                printk("Rtc invalid, reset to 2000-1-1 0:0:0\n");
-                tm.tm_year = 100;
-                tm.tm_mon = 1;
+		printk("Rtc invalid, reset to 2016-1-1 0:0:0\n");
+                tm.tm_year = 116;
+                tm.tm_mon = 0;
                 tm.tm_mday = 1;
                 tm.tm_hour = 0;
                 tm.tm_min = 0;
                 tm.tm_sec = 0;
         }
-        rtc_set_time(rtc, &tm); //if short circuit rtc, rtc will not run until we reset it
+	rtc_set_time(rtc, &tm);	//if short circuit rtc, rtc will not run until we reset it
+	err = rtc_read_time(rtc, &tm);
+	//printk("\n\n----------------------aa setting system clock to %d-%02d-%02d %02d:%02d:%02d UTC ---------\n\n",tm.tm_year , tm.tm_mon + 1, tm.tm_mday,tm.tm_hour, tm.tm_min, tm.tm_sec);
 #endif
-
 
 	err = rtc_valid_tm(&tm);
 	if (err) {
