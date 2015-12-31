@@ -469,7 +469,12 @@ static int __init fsl_espi_probe(struct of_device *ofdev,
 			dev_err(dev, "invalid gpio #%d: %d\n", i, gpio);
 			ret = gpio;
 		}
-
+		/*add for fpgaupdate by zhangjj 2015-12-31*/
+		ret = gpio_request(12, dev_name(dev));
+		if (ret) {
+			dev_err(dev, "can't request gpio #%d: %d\n", i, ret);
+		}
+		/*add end*/
 		ret = gpio_request(gpio, dev_name(dev));
 		if (ret) {
 			dev_err(dev, "can't request gpio #%d: %d\n", i, ret);

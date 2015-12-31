@@ -33,9 +33,16 @@
 
 #include <linux/spi/spi.h>
 #include <linux/spi/spidev.h>
+#include <linux/delay.h>
 
 #include <asm/uaccess.h>
 #include "w25p16.h"
+#include <asm/uaccess.h>
+#include "w25p16.h"
+#include <linux/gpio.h>
+#include <linux/timer.h>
+#include <linux/timex.h>
+#include <linux/rtc.h>
 
 /*
  * This supports acccess to SPI devices using normal userspace I/O calls.
@@ -97,8 +104,10 @@ static struct spidev_data	 *spidev;
 #define MULTI_REG_LEN_MAX		512
 //#define MULTI_REG_LEN_MAX		2
 
+#define FLASH_FPGA              2
 #define DS31400_CHIP	    1
 #define FPGA_CHIP			0
+#define GPIO_FPGAFLASH         12
 
 #define SPI_FPGA_WR_SINGLE 0x01
 #define SPI_FPGA_WR_BURST  0x02
@@ -415,7 +424,6 @@ int mix_spi_write(struct spi_device *spi ,unsigned short addr, unsigned char *da
 int dpll_spi_write(unsigned short addr, unsigned char *data, size_t count)
 {
 	int ret;
-	int flag = 0;
 	struct spi_device	*spi;
 	spin_lock_irq(&spidev->spi_lock);
 	spi = spi_dev_get(spidev->spi);
@@ -460,7 +468,6 @@ EXPORT_SYMBOL(dpll_spi_write);
 int dpll_spi_read(unsigned short addr, unsigned char *data, size_t count)
 {	
 	int ret = 0;
-	int flag =0;
 	
 	struct spi_device	*spi;
 	//printk("now in dpll_read.+1+++++++++++\n");
@@ -1214,6 +1221,22 @@ spidev_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		mutex_unlock(&chip_sel_lock);
 		retval=0;
 		break;
+        case SPI_IOC_OPER_FLASH:
+                mutex_lock(&chip_sel_lock);
+                spi->chip_select = 2;
+                spi_setup(spi);
+                gpio_direction_output(GPIO_FPGAFLASH,0);
+                chip_select = FLASH_FPGA;
+                retval = 0;
+                break;
+        case SPI_IOC_OPER_FLASH_DONE:
+                spi->chip_select = 0;
+                spi_setup(spi);
+                chip_select = FPGA_CHIP;
+                gpio_direction_output(GPIO_FPGAFLASH, 1);
+                mutex_unlock(&chip_sel_lock);
+                retval=0;
+                break;
 
 	case W25_ERASE_CHIP:
 		//printk("\nnow erase chip\n");
@@ -1255,6 +1278,8 @@ spidev_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		{
 			retval = copy_to_user((w25_rw_date_t *)arg, &w25p16_date, sizeof(w25_rw_date_t));
 		}
+                msleep(1);      /*this is needed,else cost a long time 2015-8-20 zhangjj */
+
 		break;
 
 	case W25P16_WRITE:
@@ -1266,6 +1291,8 @@ spidev_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		{
 			retval = copy_to_user((w25_rw_date_t *)arg, &w25p16_date, sizeof(w25_rw_date_t));
 		}
+                msleep(1);      /*this is needed,else cost a long time 2015-8-20 zhangjj */
+
 		break;
 	case W25P1165_ID:
 		 spi->chip_select = 2; // 0 fpga 1 dpll
@@ -1494,7 +1521,7 @@ static int __devinit spidev_probe(struct spi_device *spi)
 	}
 
 	flash.spi = spi;
-	flash.mtd.size = 0x1fffff;
+	flash.mtd.size = 0x7fffff;
 	mutex_init(&(flash.lock));
 
 	return status;

@@ -136,5 +136,7 @@ struct spi_ioc_transfer {
 #define  W25P16_READ		   _IOR(SPI_IOC_MAGIC, 11, __u32)
 #define   W25P16_WRITE	   _IOW(SPI_IOC_MAGIC, 12, __u32)
 #define   W25P1165_ID    _IOR(SPI_IOC_MAGIC, 13,  __u8)
+#define SPI_IOC_OPER_FLASH                  _IOW(SPI_IOC_MAGIC, 14, __u8)
+#define SPI_IOC_OPER_FLASH_DONE         _IOW(SPI_IOC_MAGIC, 15, __u8)
 
 #endif /* SPIDEV_H */
