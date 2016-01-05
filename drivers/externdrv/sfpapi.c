@@ -57,10 +57,8 @@ int read_fpga_data(int fd, struct fpga_msg *msg, int step)
     if(fd<0)
         return (-1);
     lseek(fd, (*msg).addr, SEEK_SET);
-    cdebug("step %d begin === read %d bytes at 0x%04x:", step, (*msg).len, (unsigned short)(*msg).addr);
     if (read(fd, (*msg).buf, (*msg).len) == (*msg).len) {
         pdata((*msg).buf, (*msg).len);
-        cdebug(" \nstep %d done\n", step);
     } else {
         cdebug(" \nstep %d error\n", step);
         return (-1);

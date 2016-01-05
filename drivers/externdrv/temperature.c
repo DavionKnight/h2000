@@ -124,7 +124,7 @@ int  getTemperature(short *temperature)
 	
 	return(temp) ;
 }
-#if 1
+#if 0
 int main()
 {
 	short temp = 0;

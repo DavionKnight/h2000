@@ -107,8 +107,8 @@ struct fpga_msg
 
     unsigned short len;        //length to read or write
 
-    unsigned char  buf[2];       //buffer to store the data
-};
+    unsigned char  buf[4];       //buffer to store the data
+}__attribute__((packed));
 
 struct fpga_rdwr_data
 {
@@ -240,14 +240,14 @@ int get_device_name(unsigned char *ptr);
  * 参数:    addr:目的地址，buf:需写入的buf，len:buf length
  * 返回值:  返回值:	0 正常返回， -1 异常返回
  **********************************************************/
-int EepromWrite(unsigned short addr,unsigned char *buf, unsigned short len);
+//int EepromWrite(unsigned short addr,unsigned char *buf, unsigned short len);
 
 /**********************************************************
  * EEPROM读函数
  * 参数:	addr:EEPROM地址，buf:需读入的buf，len:buf length
  * 返回值:	返回值: 0 正常返回， -1 异常返回
  **********************************************************/
-int EepromRead(unsigned short addr,unsigned char *buf, unsigned short len);
+//int EepromRead(unsigned short addr,unsigned char *buf, unsigned short len);
 
 
 /*******************************************
