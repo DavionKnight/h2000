@@ -6,6 +6,6 @@ export CROSS_COMPILE=ppc_85xxDP-
 
 rm fpgatest
 
-ppc_85xxDP-gcc  fan.c sfpapi.c temperature.c sysinfo.c power.c sfpinfo.c boardinfo.c rtc.c epcs_test.c sfp_pin_info.c imageapi.c eeprom_api.c -o fpgatest -lm
+ppc_85xxDP-gcc sysled.c fpgardwr.c fan.c  temperature.c power.c rtc.c eeprom_api.c -o fpgatest -lm
 cp fpgatest /tftpboot
 

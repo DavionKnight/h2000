@@ -12,7 +12,6 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <errno.h>
-#include "sfpenv.h"
 #include <tgmath.h>
 #include <string.h>
 #include "api.h"

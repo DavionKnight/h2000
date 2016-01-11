@@ -143,7 +143,7 @@ int EepromRead(enum eeprom_addr eep_addr,unsigned char *buf, unsigned short len)
         return ret;
 }
 
-#if 1
+#if 0
 int main(void)
 {
 	unsigned char buf[BUFSIZE];
