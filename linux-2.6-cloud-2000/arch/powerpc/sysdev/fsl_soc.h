@@ -42,7 +42,10 @@ struct platform_diu_data_ops {
 	ssize_t (*show_monitor_port) (int monitor_port, char *buf);
 	int (*set_sysfs_monitor_port) (int val);
 };
-
+extern int fsl_spi_init(struct spi_board_info *board_infos,
+			unsigned int num_board_infos,
+			void (*activate_cs)(u8 cs, u8 polarity),
+			void (*deactivate_cs)(u8 cs, u8 polarity));
 extern struct platform_diu_data_ops diu_ops;
 #endif
 

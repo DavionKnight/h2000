@@ -448,7 +448,7 @@ struct mpc83xx_pcie_priv {
 #define PEX_OUTWIN0_TAL		0xCA8
 #define PEX_OUTWIN0_TAH		0xCAC
 
-static int mpc83xx_pcie_exclude_device(struct pci_bus *bus, unsigned int devfn)
+int mpc83xx_pcie_exclude_device(struct pci_bus *bus, unsigned int devfn)
 {
 	struct pci_controller *hose = pci_bus_to_host(bus);
 

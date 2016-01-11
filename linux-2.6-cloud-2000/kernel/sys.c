@@ -312,8 +312,8 @@ void kernel_restart(char *cmd)
 		printk(KERN_EMERG "Restarting system.\n");
 	else
 		printk(KERN_EMERG "Restarting system with command '%s'.\n", cmd);
-	extern void reset_system(void); /* add by tianzhy for reboot using hardware watchdog */
-	reset_system();
+//	extern void reset_system(void); /* add by tianzhy for reboot using hardware watchdog */
+//	reset_system();
 	machine_restart(cmd);
 }
 EXPORT_SYMBOL_GPL(kernel_restart);

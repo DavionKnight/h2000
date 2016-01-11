@@ -477,6 +477,33 @@ err:
 }
 arch_initcall(pme_of_init);
 
+int __init fsl_spi_init(struct spi_board_info *board_infos,
+			unsigned int num_board_infos,
+			void (*activate_cs)(u8 cs, u8 polarity),
+			void (*deactivate_cs)(u8 cs, u8 polarity))
+{
+	u32 sysclk = -1;
+	int ret;
+
+#ifdef CONFIG_QUICC_ENGINE
+	/* SPI controller is either clocked from QE or SoC clock */
+	sysclk = get_brgfreq();
+#endif
+	if (sysclk == -1) {
+		sysclk = fsl_get_sys_freq();
+		if (sysclk == -1)
+			return -ENODEV;
+	}
+
+	ret = of_fsl_spi_probe(NULL, "fsl,spi", sysclk, board_infos,
+			       num_board_infos, activate_cs, deactivate_cs);
+	if (!ret)
+		of_fsl_spi_probe("spi", "fsl_spi", sysclk, board_infos,
+				 num_board_infos, activate_cs, deactivate_cs);
+
+	return spi_register_board_info(board_infos, num_board_infos);
+}
+
 /* Contiguous memory carved out by platform code, this needs early "bootmem" */
 static int __pme_8572_num_pages;
 static void *__pme_8572_mem;
