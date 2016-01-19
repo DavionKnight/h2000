@@ -425,11 +425,17 @@ int dpll_spi_write(unsigned short addr, unsigned char *data, size_t count)
 {
 	int ret;
 	struct spi_device	*spi;
+        unsigned char chip_se = 0;
+        unsigned short chip_se_bak = 0;
+
 	spin_lock_irq(&spidev->spi_lock);
 	spi = spi_dev_get(spidev->spi);
 	spin_unlock_irq(&spidev->spi_lock);
 
 	mutex_lock(&chip_sel_lock);
+        chip_se = spi->chip_select;
+        chip_se_bak = chip_select;
+
 #if 0
 	//only a few chance to alloc memory
 	if (!spidev->buffer) {
@@ -458,6 +464,9 @@ int dpll_spi_write(unsigned short addr, unsigned char *data, size_t count)
 	if(flag == 1)
      		kfree(spidev->buffer);	
 #endif
+          spi->chip_select = chip_se; // 0 fpga 1 dpll
+          chip_select = chip_se_bak;
+
 	mutex_unlock(&chip_sel_lock);
 	
 	 
@@ -468,8 +477,10 @@ EXPORT_SYMBOL(dpll_spi_write);
 int dpll_spi_read(unsigned short addr, unsigned char *data, size_t count)
 {	
 	int ret = 0;
-	
 	struct spi_device	*spi;
+        unsigned char chip_se = 0;
+        unsigned short chip_se_bak = 0;
+
 	//printk("now in dpll_read.+1+++++++++++\n");
 	spin_lock_irq(&spidev->spi_lock);
 	spi = spi_dev_get(spidev->spi);
@@ -477,6 +488,9 @@ int dpll_spi_read(unsigned short addr, unsigned char *data, size_t count)
 	//printk("now in dpll_read.++++2++++++++\n");
 
 	mutex_lock(&chip_sel_lock);
+        chip_se = spi->chip_select;
+        chip_se_bak = chip_select;
+
 #if 0
 	//only a few chance to alloc memory
 	if (!spidev->buffer) {
@@ -493,8 +507,7 @@ int dpll_spi_read(unsigned short addr, unsigned char *data, size_t count)
 	//mutex_lock(&chip_sel_lock);
 	  spi->chip_select = 1; // 0 fpga 1 dpll
 //           spi_setup(spi);
-	  chip_select = DS31400_CHIP
-	  	;
+	  chip_select = DS31400_CHIP;
 #endif	
     //mutex_lock(&spidev->buf_lock);	
 	//printk("now in dpll_read.++++++++++++\n");
@@ -514,7 +527,7 @@ int dpll_spi_read(unsigned short addr, unsigned char *data, size_t count)
 			//printk("\n ++++++++++++0x%04x+ ++++++++++++++\n", addr);
 		 	if (mix_spi_read(spi, (unsigned short)(addr + 2 * i), data + 2 *i, 2) < 0) {
 				printk("dpll-mix spi read failed.!!!!!!!!!!!!!!\n");
-				return -1;
+	//			return -1;
 			}
 		}
 	}
@@ -524,6 +537,9 @@ int dpll_spi_read(unsigned short addr, unsigned char *data, size_t count)
 	if(flag ==1 )	
 		kfree(spidev->buffer);
 #endif
+          spi->chip_select = chip_se; // 0 fpga 1 dpll
+          chip_select = chip_se_bak;
+
 	mutex_unlock(&chip_sel_lock);
 	
 	return ret;
@@ -535,13 +551,19 @@ EXPORT_SYMBOL(dpll_spi_read);
 int fpga_spi_write(unsigned short addr, unsigned char *data, size_t count)
 {
 	int ret;
-	int flag = 0;
 	struct spi_device	*spi;
+        unsigned char chip_se = 0;
+        unsigned short chip_se_bak = 0;
+
 	spin_lock_irq(&spidev->spi_lock);
 	spi = spi_dev_get(spidev->spi);
 	spin_unlock_irq(&spidev->spi_lock);
 
 	mutex_lock(&chip_sel_lock);
+
+        chip_se = spi->chip_select;
+        chip_se_bak = chip_select;
+
 #if 0
 	//only a few chance to alloc memory
 	if (!spidev->buffer) {
@@ -565,6 +587,8 @@ int fpga_spi_write(unsigned short addr, unsigned char *data, size_t count)
 	ret = mix_spi_write(spi, addr, data, count);
 	
 //	mutex_unlock(&spidev->buf_lock);	
+          spi->chip_select = chip_se; // 0 fpga 1 dpll
+          chip_select = chip_se_bak;
 	
 	mutex_unlock(&chip_sel_lock);
 #if 0	
@@ -580,8 +604,9 @@ EXPORT_SYMBOL(fpga_spi_write);
 int fpga_spi_read(unsigned short addr, unsigned char *data, size_t count)
 {	
 	int ret = 0;
-	int flag =0;
-	
+	unsigned char chip_se = 0;	
+	unsigned short chip_se_bak = 0;
+
 	struct spi_device	*spi;
 	//printk("now in dpll_read.+1+++++++++++\n");
 	spin_lock_irq(&spidev->spi_lock);
@@ -591,6 +616,8 @@ int fpga_spi_read(unsigned short addr, unsigned char *data, size_t count)
 
 	mutex_lock(&chip_sel_lock);
 
+	chip_se = spi->chip_select;
+	chip_se_bak = chip_select;
 #if 0
 	//only a few chance to alloc memory
 	if (!spidev->buffer) {
@@ -640,6 +667,9 @@ int fpga_spi_read(unsigned short addr, unsigned char *data, size_t count)
 		kfree(spidev->buffer);
 
 #endif
+          spi->chip_select = chip_se; // 0 fpga 1 dpll
+          chip_select = chip_se_bak;
+
 	mutex_unlock(&chip_sel_lock);
 	
 	return ret;
@@ -669,7 +699,6 @@ void pdata(unsigned char *pdata, int count)
 int unitboard_fpga_write(unsigned char slot, unsigned short addr, unsigned short *wdata)
 {
 	unsigned char data[32] = {0};
-	unsigned int fpga_devata = 0;
 
 	data[0] = ((slot & 0x0f) << 4) | ((addr & 0xf00) >> 8);
 	data[1] = addr & 0xff;
@@ -793,37 +822,23 @@ int unitboard_fpga_read(unsigned char slot, unsigned short addr, unsigned short 
 EXPORT_SYMBOL(unitboard_fpga_read);
 #endif
 
+typedef struct spi_rdwr_argv
+{
+	unsigned char 	cs;
+	unsigned short 	addr;
+	unsigned short 	len;
+	unsigned char 	buff[64];
+}spi_rdwr;
+
 /*-------------------------------------------------------------------------*/
 
 /* Read-only message with current device setup */
 static ssize_t
 spidev_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
 {
-#if 0
-	struct spidev_data	*spidev;
-	ssize_t			status = 0;
+	mutex_lock(&chip_sel_lock);
 
-	/* chipselect only toggles at start or end of operation */
-	if (count > bufsiz)
-		return -EMSGSIZE;
-
-	spidev = filp->private_data;
-
-	mutex_lock(&spidev->buf_lock);
-	status = spidev_sync_read(spidev, count);
-	if (status > 0) {
-		unsigned long	missing;
-
-		missing = copy_to_user(buf, spidev->buffer, status);
-		if (missing == status)
-			status = -EFAULT;
-		else
-			status = status - missing;
-	}
-	mutex_unlock(&spidev->buf_lock);
-#else
-  	  unsigned int addr = *f_pos;
-	unsigned char data[MULTI_REG_LEN_MAX] = {0};
+	spi_rdwr sopt;
 
 	struct spidev_data	*spidev;
 	struct spi_device 	*spi;//remmerber to chang last
@@ -831,55 +846,38 @@ spidev_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
 	spidev = filp->private_data;
 	spi = spidev->spi;	
 
-	if (count > MULTI_REG_LEN_MAX || (addr + count) > (DS31400_REG_ADDR_MAX + 1)) {
+	copy_from_user(&sopt, buf, sizeof(sopt));
+	if(0 == sopt.cs)	//fpga
+	{
+		spi->chip_select = 0;
+		chip_select = FPGA_CHIP;
+	}
+	else if(1 == sopt.cs)
+	{
+		spi->chip_select = 0;
+                chip_select = DS31400_CHIP;
+	}
+	else
+	{
+		printk("read:error cs=%d\n",sopt.cs);
+		goto END;
+	}
+	if (sopt.len > 64) {
 		debugk("mix spi write out of range.\n");
-		return 0;
+		goto END;
 	}
-	#if 0
-	if (mix_spi_read(spi,(unsigned short)addr, data, count) < 0) {
-		debugk("mix spi read failed.\n");
-		return 0;
-	}
-	#endif
 	mutex_lock(&spidev->buf_lock);
 	{
-#if 0
-		int i;
-		int loop;
-	
-		if( (count % 2 ) == 0 )	
-		  	loop = count / 2;
-		else
-			loop = (count + 1) / 2;				
-			
-		//printk("\n ++++++++++++%d+ ++++++++++++++\n", loop);
-		for(i = 0; i < loop; i++)
-		{	
-			//addr = addr  + 2*i;
-			//printk("\n ++++++++++++0x%04x+ ++++++++++++++\n", addr);
-		 	if (mix_spi_read(spi, (unsigned short)(addr + 2 * i), data + 2 *i, 2) < 0) {
-				debugk("mix spi read failed.\n");
-				return 0;
-			}
-	
-		}
-#else
-		mix_spi_read(spi, (unsigned short)addr, data, count);
-#endif
+		mix_spi_read(spi, (unsigned short)sopt.addr, sopt.buff, sopt.len);
 	}
 	
-	copy_to_user(buf, &data[0], count);
+	copy_to_user(buf, &sopt, sizeof(sopt));
 	mutex_unlock(&spidev->buf_lock);
 
-	{
-		//unsigned char tmp[2]={0, 0};//used to test suxq fun
-		//fpga_spi_read(0x00, tmp, 2);
-		//mix_spi_read(spi, 0x00, tmp, 2) ;
-	}
-	return count;
-#endif
+END:
+	mutex_unlock(&chip_sel_lock);
 
-	//return status;
+	return sopt.len;
 }
 
 /* Write-only message with current device setup */
@@ -887,56 +885,51 @@ static ssize_t
 spidev_write(struct file *filp, const char __user *buf,
 		size_t count, loff_t *f_pos)
 {
-#if 0
-	struct spidev_data	*spidev;
-	ssize_t			status = 0;
-	unsigned long		missing;
+	mutex_lock(&chip_sel_lock);
 
-	/* chipselect only toggles at start or end of operation */
-	if (count > bufsiz)
-		return -EMSGSIZE;
-
-	spidev = filp->private_data;
-
-	mutex_lock(&spidev->buf_lock);
-	missing = copy_from_user(spidev->buffer, buf, count);
-	if (missing == 0) {
-		status = spidev_sync_write(spidev, count);
-	} else
-		status = -EFAULT;
-	mutex_unlock(&spidev->buf_lock);
-
-	return status;
-#else
-	unsigned int addr = *f_pos;
-	unsigned char data[MULTI_REG_LEN_MAX] = {0};
-//	int i;
-
-	
+	spi_rdwr sopt;
 
 	struct spidev_data	*spidev;
 	struct spi_device 	*spi;//remmerber to chang last
 		
 	spidev = filp->private_data;
 	spi = spidev->spi;		
+
+	copy_from_user(&sopt, buf, sizeof(sopt));
 	
-	if (count > MULTI_REG_LEN_MAX || (addr + count) > (DS31400_REG_ADDR_MAX + 1)) {
-		debugk("mix spi write out of range.\n");
-		return 0;
+	if(0 == sopt.cs)	//fpga
+	{
+		spi->chip_select = 0;
+		chip_select = FPGA_CHIP;
 	}
+	else if(1 == sopt.cs)
+	{
+		spi->chip_select = 0;
+                chip_select = DS31400_CHIP;
+	}
+	else
+	{
+		printk("read:error cs=%d\n",sopt.cs);
+		goto END;
+	}
+	if (sopt.len > 64) {
+		debugk("mix spi write out of range.\n");
+		goto END;
+	}
+
+
+
 	mutex_lock(&spidev->buf_lock);	
-	copy_from_user(data, buf, count);
 
-
-	if (mix_spi_write(spi,(unsigned short)(addr ), data, count) < 0) {
+	if (mix_spi_write(spi,(unsigned short)sopt.addr, sopt.buff, sopt.len) < 0) {
 		debugk("mix spi write failed.\n");
-		return 0;
 	}
 
 	mutex_unlock(&spidev->buf_lock);
-	//printk("\n conut  = %d \n ",count);
-	return count;
-#endif
+END:
+	mutex_unlock(&chip_sel_lock);
+
+	return sopt.len;
 }
 
 static int spidev_message(struct spidev_data *spidev,
@@ -1188,39 +1181,29 @@ spidev_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 				dev_dbg(&spi->dev, "%d Hz (max)\n", tmp);
 		}
 		break;
-
+#if 0
 	//new add
 	case SPI_IOC_OPER_FPGA:
-	       mutex_lock(&chip_sel_lock);
-
-	       spi->chip_select = 0; // 0 fpga 1 dpll
-//		   spi_setup(spi);
-	       chip_select = FPGA_CHIP;
-
+	       	spi->chip_select = 0; // 0 fpga 1 dpll
+	       	chip_select = FPGA_CHIP;
 		retval = 0;
 	       break;
 	case SPI_IOC_OPER_FPGA_DONE:
-		spi->chip_select = 1; // 0 fpga 1 dpll
-//		spi_setup(spi);
-	    chip_select = DS31400_CHIP;
 		retval = 0;
-		mutex_unlock(&chip_sel_lock);
 		break;
-
 	case SPI_IOC_OPER_DPLL:
-	       mutex_lock(&chip_sel_lock);
-	       spi->chip_select = 1; // 0 fpga 1 dpll
-//		   spi_setup(spi);
-	       chip_select = DS31400_CHIP;
-	       retval = 0;
-	       break;
+//	       	mutex_lock(&chip_sel_lock);
+	       	spi->chip_select = 1; // 0 fpga 1 dpll
+	       	chip_select = DS31400_CHIP;
+	       	retval = 0;
+	       	break;
 	case SPI_IOC_OPER_DPLL_DONE:
 		spi->chip_select = 0; // 0 fpga 1 dpll
-//		spi_setup(spi);
-	    chip_select = FPGA_CHIP;
-		mutex_unlock(&chip_sel_lock);
+	    	chip_select = FPGA_CHIP;
+//		mutex_unlock(&chip_sel_lock);
 		retval=0;
 		break;
+#endif
         case SPI_IOC_OPER_FLASH:
                 mutex_lock(&chip_sel_lock);
                 spi->chip_select = 2;
@@ -1283,10 +1266,13 @@ spidev_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		break;
 
 	case W25P16_WRITE:
+		printk("w25p16_write\n");
 		retval =  copy_from_user(&w25p16_date, (w25_rw_date_t *)arg, sizeof(w25_rw_date_t));
 		if(retval != 0)
-			break;		    
+			break;	
+		printk("before w25p16_write\n");	    
 		retval  =  w25p16_write(&flash , w25p16_date.addr, w25p16_date.len, &retlen, w25p16_date.buf);
+		printk("after w25p16_write\n");	    
 		if(retval == 0)
 		{
 			retval = copy_to_user((w25_rw_date_t *)arg, &w25p16_date, sizeof(w25_rw_date_t));
