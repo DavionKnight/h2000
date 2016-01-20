@@ -53,7 +53,7 @@ int fpga_flash_write(int fd_pof)
 		faddr += 0x10000;
 	}
 #else	
-#if 0
+#if 1
 	if(ioctl(fd, W25_ERASE_CHIP, 0)<0)
 	{
 		ret = -1;
@@ -61,15 +61,12 @@ int fpga_flash_write(int fd_pof)
 	}
 #endif
 #endif
-	printf("before while\n");
 	while((len =read(fd_pof,w25p16_date.buf,BLOCK_SIZE))>0)
         {
 
                 w25p16_date.addr = faddr;
                 w25p16_date.len =  len;
-		printf("len=%d\n",len);
 	       	ret = ioctl(fd, W25P16_WRITE, (unsigned long)&w25p16_date);
-		printf("ret = %d\n",ret);
 		if (ret != 0)
 		{
 			printf("write error\n");

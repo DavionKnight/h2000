@@ -714,6 +714,7 @@ int unitboard_fpga_write(unsigned char slot, unsigned short addr, unsigned short
 	return 0;
 }
 EXPORT_SYMBOL(unitboard_fpga_write);
+#if 0   //as the unitboard buff and cmd reassigned ,disable read opt
 /*read a short data*/
 int unitboard_fpga_read_one(unsigned char slot, unsigned short addr, unsigned short* wdata)
 {
@@ -821,7 +822,7 @@ int unitboard_fpga_read(unsigned char slot, unsigned short addr, unsigned short 
 }
 EXPORT_SYMBOL(unitboard_fpga_read);
 #endif
-
+#endif
 typedef struct spi_rdwr_argv
 {
 	unsigned char 	cs;
@@ -837,7 +838,6 @@ static ssize_t
 spidev_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
 {
 	mutex_lock(&chip_sel_lock);
-
 	spi_rdwr sopt;
 
 	struct spidev_data	*spidev;
@@ -854,7 +854,7 @@ spidev_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
 	}
 	else if(1 == sopt.cs)
 	{
-		spi->chip_select = 0;
+		spi->chip_select = 1;
                 chip_select = DS31400_CHIP;
 	}
 	else
@@ -886,7 +886,6 @@ spidev_write(struct file *filp, const char __user *buf,
 		size_t count, loff_t *f_pos)
 {
 	mutex_lock(&chip_sel_lock);
-
 	spi_rdwr sopt;
 
 	struct spidev_data	*spidev;
@@ -904,7 +903,7 @@ spidev_write(struct file *filp, const char __user *buf,
 	}
 	else if(1 == sopt.cs)
 	{
-		spi->chip_select = 0;
+		spi->chip_select = 1;
                 chip_select = DS31400_CHIP;
 	}
 	else
@@ -1266,13 +1265,10 @@ spidev_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		break;
 
 	case W25P16_WRITE:
-		printk("w25p16_write\n");
 		retval =  copy_from_user(&w25p16_date, (w25_rw_date_t *)arg, sizeof(w25_rw_date_t));
 		if(retval != 0)
 			break;	
-		printk("before w25p16_write\n");	    
 		retval  =  w25p16_write(&flash , w25p16_date.addr, w25p16_date.len, &retlen, w25p16_date.buf);
-		printk("after w25p16_write\n");	    
 		if(retval == 0)
 		{
 			retval = copy_to_user((w25_rw_date_t *)arg, &w25p16_date, sizeof(w25_rw_date_t));

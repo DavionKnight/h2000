@@ -395,20 +395,17 @@ int w25p16_write(struct w25p *flash , loff_t to, size_t len,
 	t[0].len = CMD_SIZE;
 	spi_message_add_tail(&t[0], &m);
 
-	printk("before flash lock\n");	
 	//t[1].tx_buf = buf;
 	//spi_message_add_tail(&t[1], &m);
 
 	mutex_lock(&flash->lock);
 
-	printk("before flash lock\n");	
 	/* Wait until finished previous write command. */
 	if (wait_till_ready(flash)) {
 		mutex_unlock(&flash->lock);
 		return 1;
 	}
 
-	printk("before flash lock\n");	
 	write_enable(flash);
 
 	/* Set up the opcode in the write buffer. */
@@ -419,7 +416,6 @@ int w25p16_write(struct w25p *flash , loff_t to, size_t len,
 
 	/* what page do we start with? */
 	page_offset = to % FLASH_PAGESIZE;
-	printk("pageoffset +len = %d\n",page_offset + len);	
 
 	/* do all the bytes fit onto one page? */
 	if (page_offset + len <= FLASH_PAGESIZE) {
@@ -469,7 +465,6 @@ int w25p16_write(struct w25p *flash , loff_t to, size_t len,
 
 	mutex_unlock(&flash->lock);
 
-	printk("before flash lock\n");	
 	return 0;
 }
 void w25p16_read_id(struct spi_device *spi)
