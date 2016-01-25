@@ -8,7 +8,8 @@ export ARCH=powerpc
 #export PATH=/home/liufeng/work/my_opt/eldk411/usr/bin:$PATH
 #export CROSS_COMPILE=ppc_82xx-
 
-export PATH=/opt/eldk42/usr/bin:$PATH
+#export PATH=/opt/eldk42/usr/bin:$PATH
+export PATH=/home/kevin/Documents/ppc-tools/usr/bin:$PATH
 export CROSS_COMPILE=ppc_85xxDP-
 
 #make distclean
