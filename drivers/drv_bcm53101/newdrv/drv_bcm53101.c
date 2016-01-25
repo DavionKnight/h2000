@@ -168,7 +168,7 @@ int bcm53101_read(unsigned char page, unsigned char addr, unsigned short *value)
         unsigned short setval, ret_val = 0, s_count = 0xffff;
 	int mii_id = 0;	
 
-printk("page=0x%x,addr=0x%x\n",page,addr);
+//printk("page=0x%x,addr=0x%x\n",page,addr);
 
 	if(((page >= 0x10) && (page <= 0x14))||(page == 0x17))//get real port phy addr
 	{
@@ -205,16 +205,16 @@ printk("page=0x%x,addr=0x%x\n",page,addr);
 	        }while(s_count > 0);
 	        ret_val = fsl_mdio_read(mii_id, PSEPHY_ACCESS_REG1, &setval);
 		value[0] = setval;
-		printk("value[0]=0x%x\n",value[0]);
+//		printk("value[0]=0x%x\n",value[0]);
 	        ret_val = fsl_mdio_read(mii_id, PSEPHY_ACCESS_REG2, &setval);
 		value[1] = setval;
-		printk("value[1]=0x%x\n",value[1]);
+//		printk("value[1]=0x%x\n",value[1]);
 	        ret_val = fsl_mdio_read(mii_id, PSEPHY_ACCESS_REG3, &setval);
 		value[2] = setval;
-		printk("value[2]=0x%x\n",value[2]);
+//		printk("value[2]=0x%x\n",value[2]);
 	        ret_val = fsl_mdio_read(mii_id, PSEPHY_ACCESS_REG4, &setval);
 		value[3] = setval;
-		printk("value[3]=0x%x\n",value[3]);
+//		printk("value[3]=0x%x\n",value[3]);
 		if(ret_val)
 			return -1;
 	}
@@ -239,7 +239,7 @@ int bcm53101_fs_read(struct file *filp, char __user *buf, size_t count, loff_t *
 	copy_from_user(&bcmstru, buf, count);
 	page = bcmstru.page;
 	addr = bcmstru.addr;
-	printk("addr0x%x, bcmstru.addr=%x\n",addr,bcmstru.addr);
+	//printk("addr0x%x, bcmstru.addr=%x\n",addr,bcmstru.addr);
 	bcm53101_read(page, addr, value);
 	memcpy(bcmstru.val, value, sizeof(value));
 	copy_to_user(buf, &bcmstru, sizeof(bcmstru));
