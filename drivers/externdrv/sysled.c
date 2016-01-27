@@ -31,10 +31,6 @@ int setAlarmLed(int led_type,int led_color)
                  cdebug("open /dev/spidev0.0 error\n");
                  return(-1);
         }
-        if(ioctl(fd, SPI_IOC_OPER_FPGA, NULL))
-        {
-                cdebug("ioctl SPI_IOC_OPER_FPGA error\n");
-        }
         memset(&msg, 0, sizeof(msg));
         msg.addr = 0x15;
         msg.len = 4;
@@ -44,10 +40,6 @@ int setAlarmLed(int led_type,int led_color)
 		msg.buf[3] |= 1 << type;
         write_fpga_data(fd,&msg,0);
 
-        if(ioctl(fd, SPI_IOC_OPER_FPGA_DONE, NULL))
-        {
-                cdebug("ioctl SPI_IOC_OPER_FPGA_DONE error\n");
-        }
         close(fd);
 
 	return 0;
@@ -79,7 +71,7 @@ int setRunLed( int led_color)
 	
 	return 0;
 }
-
+#if 0
 int main(void)
 {
 	sysLedInit();
@@ -96,4 +88,8 @@ int main(void)
 	}
 	return 0;    
 }
+#endif
+
+
+
 
