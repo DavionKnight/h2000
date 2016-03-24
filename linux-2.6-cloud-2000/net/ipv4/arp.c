@@ -857,8 +857,41 @@ static int arp_process(struct sk_buff *skb)
 		goto out;
 	}
 
+
 	if (arp->ar_op == htons(ARPOP_REQUEST) &&
 	    ip_route_input_noref(skb, tip, sip, 0, dev) == 0) {
+                /* add by tianzhy 2015-5-26 */
+                /* The kernel arp protocol receives a arp request from a port, it will give an arp-reply with the incoming-rx-port mac.
+                        So we must compare the incoming port's ipaddr with the dst-ipaddr within the protocol packet, if they are in the save net segment, we give the arp-reply.
+                        Otherwise ,discard the arp-request.
+                */
+                /*
+                printk("tip=%lx sip=%lx....\n", tip ,sip);
+                printk("name = %s \n", dev->name);
+
+                printk("ifa_local=%x ifa_addr=%x mask=%x \n", in_dev->ifa_list->ifa_local,in_dev->ifa_list->ifa_address,in_dev->ifa_list->ifa_mask);
+                */
+#if 0 
+                if((sip & in_dev->ifa_list->ifa_mask) != (in_dev->ifa_list->ifa_address & in_dev->ifa_list->ifa_mask))
+                        goto out;
+#else  /* 2016-2-23*/
+	struct in_ifaddr *ifnext = in_dev->ifa_list;
+        while(ifnext)
+        {
+                if((sip & ifnext->ifa_mask) == (ifnext->ifa_address & ifnext->ifa_mask))
+                {
+                        break;
+                }
+                ifnext = ifnext->ifa_next;
+                if(!ifnext)                     {
+                        goto out;
+                }
+        }
+
+
+#endif
+                /* end by tianzhy 2015-5-26*/
+
 
 		rt = skb_rtable(skb);
 		addr_type = rt->rt_type;
@@ -873,7 +906,9 @@ static int arp_process(struct sk_buff *skb)
 			if (!dont_send) {
 				n = neigh_event_ns(&arp_tbl, sha, &sip, dev);
 				if (n) {
-					arp_send(ARPOP_REPLY,ETH_P_ARP,sip,dev,tip,sha,dev->dev_addr,sha);
+
+                                        arp_send(ARPOP_REPLY,ETH_P_ARP,sip,dev,tip,sha,dev->dev_addr,sha);
+
 					neigh_release(n);
 				}
 			}
