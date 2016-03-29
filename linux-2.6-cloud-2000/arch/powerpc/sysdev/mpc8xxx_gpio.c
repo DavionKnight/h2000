@@ -91,7 +91,7 @@ static void mpc8xxx_gpio_set(struct gpio_chip *gc, unsigned int gpio, int val)
 	unsigned long flags;
 
 	spin_lock_irqsave(&mpc8xxx_gc->lock, flags);
-
+	mpc8xxx_gc->data = in_be32(mm->regs+GPIO_DAT);
 	if (val)
 		mpc8xxx_gc->data |= mpc8xxx_gpio2mask(gpio);
 	else
