@@ -8,7 +8,8 @@ CC=$5
 #myver=Ver1.00 #2015-6-26
 #myver=Ver3.01 #2015-11-30
 #myver=Ver3.02 #2016-1-27
-myver=Ver3.03 #2016-3-29
+#myver=Ver3.03 #2016-3-29
+myver=Ver3.04 #2016-6-3 wdt v2.02
 
 vecho() { [ "${quiet}" = "silent_" ] || echo "$@" ; }
 
