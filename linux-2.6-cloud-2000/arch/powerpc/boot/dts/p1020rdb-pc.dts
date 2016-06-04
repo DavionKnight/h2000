@@ -408,8 +408,9 @@
 			clk-handle = <&etsec2_clk>;
 			local-mac-address = [ 00 00 00 00 00 00 ];
 			interrupt-parent = <&mpic>;
-			phy-handle = <&phy0>;
-			tbi-handle = <&tbi0>;
+		/*	phy-handle = <&phy0>; */
+			tbi-handle = <&tbi0>; 
+			fixed-link = <3 3 1000 0 0>;  
 			phy-connection-type = "sgmii";
 
 			ptimer-handle = <&ptp_timer>;
