@@ -8,6 +8,10 @@
 #include <linux/types.h>
 #include <linux/spi/spidev.h>
 #include <string.h>
+#include <pthread.h>
+
+pthread_mutex_t mutex_fpga= PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_dpll= PTHREAD_MUTEX_INITIALIZER;
 
 typedef struct spi_rdwr_argv
 {
@@ -34,32 +38,38 @@ typedef struct spi_rdwr_argv
 int fd,errnu_f = 0,errnu_d = 0;
 spi_rdwr sopt;
 
-int fpga_dpll_test(int pid)
+int fpga_dpll_test(void *arg)
 {
         fd = open("/dev/spidev0.0", O_RDWR);
         if (fd == -1) {
                 printf("dpll file open failed.\n");
                 return -1;
         }
+	printf("arg=%d\n",*((char*)arg));
 #if 1
-	if(pid > 0)
+	if(*((char*)arg) == 0)
 	{
 		short i = 0,data;
 		while(1)
 		{
+pthread_mutex_lock(&mutex_fpga);
 			sopt.cs = 0;
                 	sopt.addr = 0x1040;
 			sopt.len = 4;
 			sopt.buff[0] = i;
+			sopt.buff[1] = i;
+			sopt.buff[2] = i;
+			sopt.buff[3] = i;
 
 			write(fd, &sopt, sizeof(sopt));
-			usleep(1000);
+			usleep(100);
 			read(fd, &sopt, sizeof(sopt));
 			data = sopt.buff[0];
+pthread_mutex_unlock(&mutex_fpga);
 			if(data!=i)
 			{
 				errnu_f++;
-				printf("fpga,error,i=%x,data=%x,err=%d\n\n",i,data,errnu_f);
+				printf("fpga,error,i=%x,data=%x %x %x %x,err=%d\n\n",i,data,sopt.buff[1],sopt.buff[2],sopt.buff[3],errnu_f);
 //				return 0;
 			}
 			i++;
@@ -74,15 +84,17 @@ int fpga_dpll_test(int pid)
 		unsigned char i = 0,data;
 		while(1)
 		{
+pthread_mutex_lock(&mutex_dpll);
                         sopt.cs = 1;
                         sopt.addr = 3;
                         sopt.len = 1;
                         sopt.buff[0] = i;
 
                         write(fd, &sopt, sizeof(sopt));
-			usleep(1000);
+			usleep(100);
                         read(fd, &sopt, sizeof(sopt));
                         data = sopt.buff[0];
+pthread_mutex_lock(&mutex_dpll);
                         if(data!=i)
                         {
                                 errnu_f++;
@@ -100,16 +112,16 @@ int fpga_dpll_test(int pid)
 int main(int argc, char *argv[])
 {
 	int pid;
+	char arg1 = 0, arg2 = 1;
+	pthread_t id_1,id_2,id_3,id_4,id_5;
 
 
-	pid = fork();
-	pid = fork();
-//	pid = 0;
-	
-	printf("pid = %d\n",pid);
-	fpga_dpll_test(pid);
+	pthread_create(&id_1, NULL, (void *)fpga_dpll_test, &arg1);
+	pthread_create(&id_2, NULL, (void *)fpga_dpll_test, &arg1);
+	pthread_create(&id_3, NULL, (void *)fpga_dpll_test, &arg2);
+	pthread_create(&id_4, NULL, (void *)fpga_dpll_test, &arg2);
+	pthread_create(&id_5, NULL, (void *)fpga_dpll_test, &arg1);
 	sleep(1);
-	printf("pid = %d,error out\n",pid);
 while(1);
 	return 0;
 }
