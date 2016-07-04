@@ -90,6 +90,12 @@ static void mpc8xxx_gpio_set(struct gpio_chip *gc, unsigned int gpio, int val)
 	struct mpc8xxx_gpio_chip *mpc8xxx_gc = to_mpc8xxx_gpio_chip(mm);
 	unsigned long flags;
 
+	/*do not change WDT gpio by zhangjiajie 2016-6-27*/
+	if(1 == gpio || 3 == gpio)
+	{
+		printk("error!!!! WDT changed ,gpio=%d\n\n",gpio);
+	}
+
 	spin_lock_irqsave(&mpc8xxx_gc->lock, flags);
 	mpc8xxx_gc->data = in_be32(mm->regs+GPIO_DAT);
 	if (val)
@@ -108,6 +114,12 @@ static int mpc8xxx_gpio_dir_in(struct gpio_chip *gc, unsigned int gpio)
 	struct mpc8xxx_gpio_chip *mpc8xxx_gc = to_mpc8xxx_gpio_chip(mm);
 	unsigned long flags;
 
+	/*do not change WDT gpio by zhangjiajie 2016-6-27*/
+	if(1 == gpio || 3 == gpio)
+	{
+		printk("error!!!! WDT changed ,gpio=%d\n\n",gpio);
+	}
+
 	spin_lock_irqsave(&mpc8xxx_gc->lock, flags);
 
 	clrbits32(mm->regs + GPIO_DIR, mpc8xxx_gpio2mask(gpio));
@@ -122,6 +134,12 @@ static int mpc8xxx_gpio_dir_out(struct gpio_chip *gc, unsigned int gpio, int val
 	struct of_mm_gpio_chip *mm = to_of_mm_gpio_chip(gc);
 	struct mpc8xxx_gpio_chip *mpc8xxx_gc = to_mpc8xxx_gpio_chip(mm);
 	unsigned long flags;
+
+	/*do not change WDT gpio by zhangjiajie 2016-6-27*/
+	if(1 == gpio || 3 == gpio)
+	{
+		printk("error!!!! WDT changed ,gpio=%d\n\n",gpio);
+	}
 
 	mpc8xxx_gpio_set(gc, gpio, val);
 
