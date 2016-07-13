@@ -434,8 +434,8 @@ void reset_system(void)
 {
 	void __iomem *immap;
 
-	immap = ioremap(get_immrbase()+0xf000, 8);
-
+	immap = ioremap(get_immrbase()+0xf000, 0x10);
+	clrbits32(immap+8, 0x10000000);
 	clrbits32( immap, 0x40000000);
        iounmap(immap);
 

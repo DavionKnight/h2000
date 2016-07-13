@@ -83,7 +83,7 @@ static int mpc8xxx_gpio_get(struct gpio_chip *gc, unsigned int gpio)
 
 	return in_be32(mm->regs + GPIO_DAT) & mpc8xxx_gpio2mask(gpio);
 }
-
+int oldvalue=0;
 static void mpc8xxx_gpio_set(struct gpio_chip *gc, unsigned int gpio, int val)
 {
 	struct of_mm_gpio_chip *mm = to_of_mm_gpio_chip(gc);
@@ -96,8 +96,21 @@ static void mpc8xxx_gpio_set(struct gpio_chip *gc, unsigned int gpio, int val)
 		printk("error!!!! WDT changed ,gpio=%d\n\n",gpio);
 	}
 
+	/*disable app reconfig gpio9*/
+	if(9 == gpio)	
+	{
+		if(oldvalue == val)
+			return;
+	}
+	oldvalue = val;
+	/*disable end*/
+
 	spin_lock_irqsave(&mpc8xxx_gc->lock, flags);
 	mpc8xxx_gc->data = in_be32(mm->regs+GPIO_DAT);
+
+	//if(0x4f000000!=(0x4f000000&mpc8xxx_gc->data))
+		//printk("\nmpc8xxx_gpio_set data=0x%0x gpio=%d val=%d\n",mpc8xxx_gc->data, gpio, val);
+
 	if (val)
 		mpc8xxx_gc->data |= mpc8xxx_gpio2mask(gpio);
 	else
