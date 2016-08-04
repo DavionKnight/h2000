@@ -92,7 +92,14 @@
 
 			partition@1800000  {
 				/* 4MB for Linux Kernel Image */
-				reg = < 0x01800000 0x3e800000>;
+				reg = < 0x01800000 0x19000000>;
+				label = "File safe";
+				//read-only;
+			};
+
+			partition@1a800000  {
+				/* 4MB for Linux Kernel Image */
+				reg = < 0x1a800000 0x25000000>;
 				label = "Application";
 				//read-only;
 			};

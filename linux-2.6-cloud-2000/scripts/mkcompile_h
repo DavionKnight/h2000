@@ -13,7 +13,8 @@ CC=$5
 #myver=Ver3.05 #2016-6-3 1.add iptables 2.enable serDes interface eth1  
 #myver=Ver3.05-t #2016-6-2 test wdt gpio
 #myver=Ver3.05tt #2016-7-4 test wdt delete iptables
-myver=Ver3.06 #2016-7-12 1.refresh wdt.ko v2.04 2.gpio set add sth 
+#myver=Ver3.06 #2016-7-12 1.refresh wdt.ko v2.04 2.gpio set add sth 
+myver=Ver3.06-T #2016-8-12 add mtd3: 19000000 00020000 "File safe" partition
 
 vecho() { [ "${quiet}" = "silent_" ] || echo "$@" ; }
 
