@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
 	{
 		printf("bcm53101 read <page:hex> <addr:hex>\n");
 		printf("bcm53101 write <page:hex> <addr:hex> <data:hex>\n");
-		printf("bcm53101 select [0/1/2] \n");
+		printf("bcm53101 select [0/1/2] 0,1 conmmunication between plate; 2 outband port\n");
 	}
 	
 	close(bcmfd);

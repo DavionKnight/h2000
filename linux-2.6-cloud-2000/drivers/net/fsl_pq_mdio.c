@@ -416,6 +416,11 @@ int BCM53101_C_init()
         gpio_direction_output(8, 1);
         gpio_direction_output(13, 1);
 
+        //set port led in a correct status
+        memset(mdio_val, 0, sizeof(mdio_val));
+        mdio_val[0] = 0x2012;
+        bcm53101_c_write(0, 0x12, mdio_val);
+
         //set IMP port enable 
         memset(mdio_val, 0, sizeof(mdio_val));
         mdio_val[0] = 0x80;
