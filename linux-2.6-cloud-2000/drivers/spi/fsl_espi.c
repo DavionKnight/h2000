@@ -678,7 +678,7 @@ static struct of_platform_driver fsl_espi_driver = {
 
 static int __init fsl_espi_init(void)
 {
-	return of_register_platform_driver(&fsl_espi_driver);
+//	return of_register_platform_driver(&fsl_espi_driver);
 }
 
 static void __exit fsl_espi_exit(void)

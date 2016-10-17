@@ -1550,6 +1550,7 @@ static struct spi_driver spidev_spi_driver = {
 
 static int __init spidev_init(void)
 {
+#if 0
 	int status;
 
 	/* Claim our 256 reserved device numbers.  Then register a class
@@ -1573,6 +1574,7 @@ static int __init spidev_init(void)
 		unregister_chrdev(SPIDEV_MAJOR, spidev_spi_driver.driver.name);
 	}
 	return status;
+#endif
 }
 module_init(spidev_init);
 
