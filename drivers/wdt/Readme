@@ -1,0 +1,101 @@
+Readme.txt
+
+
+Der watchdogdriver übernimmt die Triggerung des eines externen Watchdogbausteins (falls vorhanden).
+Auf der CoP Hardware (TPS330x) wird hierzu jede Sekunde eine Flanke auf den WDI Eingang des 
+Watchdogbausteins gegeben. 
+
+Als zweite Stufe ermöglicht der Treiber die Überwachung von Applicationen.
+Jede Applikation kann sich hierzun über IOCTL Funktionen des Treibers bei diesem zur Überwachung Anmelden.
+
+Neben Ihrer PID muss die Applikation dem Treiber mitteilen in welchen Zeitabständen (IN JIFFIES) eine
+Rückmeldung in Form von "Lebenszeichen" erfolgen wird.
+
+Der Watchdogtreiber überwacht daraufhin die regelmäßige Meldung dieser registrierten Applikationen.
+Bleibt eine Rückmeldung aus, begint eine Cont-Down im Watchdog timer. 
+Während der Laufzeit des Contdowns hat eine registrierte Applikation durch senden eines "Lebenszeichens" 
+(IOCTL-Aufruf) die Möglichkeit den Count-Down zu beenden und den Treiber in den Normalzustand zurückzuversetzen.
+
+Bleibt jedoch auch während des Count-Downs eine Rückmeldung der Applikation aus, so führt der Watchdog-driver
+ein Systemreboot aus und stellt die Service Funktion für den externen Watchdog-Baustein ein.
+
+
+Kontrol-Möglichkeiten:
+
+1.) Watchdog wird nur zur Triggerung des externen Watchdog Bausteins verwendet.
+
+
+
+
+IOCTL Functions: ioctl(int fd, IOCTL_Code, [data *]);
+
+
+Generel functions:
+==================
+
+WDT_ENABLE  // main switch to enable watchdog task supervision
+
+  Beispiel:
+  	printf("----->  Use IOCTL_Function to enable watchdog\n");               
+	if (ioctl(fd, WDT_ENABLE))
+		printf("----->     **** Failure during wdt enable\n");               
+	else
+		printf("----->     **** Watchdog enabled\n");               
+--------------------------------------------------------------------
+WDT_DISABLE // main switch to disable watchdog (stil running but no reset (restart) will ever occur)
+--------------------------------------------------------------------
+WDT_OPEN_ONLY	// watchdog will only time out if device is opened by at least one task
+--------------------------------------------------------------------
+WDT_ALWAYS_TIME_OUT	 // watchdog will always time out even if driver ist not open by any task, but a leas t one task is registered
+--------------------------------------------------------------------
+WDT_EXCLUSIV_OPEN_ONLY  // Device can be opend only by one task at a time (if already opend by more than one task only new openings are forbidden)
+--------------------------------------------------------------------
+WDT_ALWAYS_OPEN // Device can be opened by an unlimited No. of tasks
+--------------------------------------------------------------------
+
+Task related functions:
+=======================
+
+A task that needs to be supervised must first register at the driver (driver must be enabled WDT_ENABLE)
+
+WDT_REGISTER_ME    		_IOW(WDT_IOC_MAGIC, 6, wdt_registerded_task_t *)		// register an new PID (task) to be supervised
+
+  Beispiel:
+    #define	SEC	*100
+	pid_t 	my_pid;							// in fact it's an int
+	wdt_registerded_task_t	my_task;		// setup IOCTL data
+	...
+	my_pid=getpid();						// Find out our PID to register at Watchdog_Device
+	my_task.pid =  my_pid;					// Fill struct
+	my_task.call_period = 20 SEC;			// Melde mich spätestens alle 20 sec
+	...
+	// Register Task with current PID
+	printf("----->  Use IOCTL_Function to register my PID: %d \n", my_pid);               
+	strcpy(my_task.command, "\n**** Bitte achte auf mich. Ich bin doch neur ein kleiner Task !!!! ****\n");
+	ioctl_return = ioctl(fd, WDT_REGISTER_ME, &my_task);   
+--------------------------------------------------------------------
+WDT_SERVE_ME    		_IOW(WDT_IOC_MAGIC, 8, pid_t *)		// pid_t used to send "task alive" messages
+
+After a task has been registered it must call the device driver in time intervals to send "I'm alive" messages.
+To do that the same pid must be transmitted that has been used for registraion 
+
+--------------------------------------------------------------------
+In case a task should be removed from the system, it has to be removed from the watchdog driver as well (only
+if it has been registered before ;-))
+After WDT_REMOVE_ME has been called, the task will no be supervised any longer.
+To the remove the supervisor the same pid must be transmitted that has been used to register taht task. (WDT_REGISTER_ME)
+
+WDT_REMOVE_ME    		_IOW(WDT_IOC_MAGIC, 7, pid_t *)		// remove a PID (task) forim watchdog control
+--------------------------------------------------------------------
+
+
+WDT_GET_STATUS	        _IOR(WDT_IOC_MAGIC, 1, int *)		// show current status of Watchdog (testing only)
+WDT_GETSUPPORT			_IOR(WDT_IOC_MAGIC, 11, struct watchdog_info *)		// Return an identifier struct
+
+Just for information purposes ...
+
+--------------------------------------------------------------------
+IOCTL_HARDRESET			_IO(WDT_IOC_MAGIC,12)				// reable unloading in case of error
+
+In case the driver can not be unloaded due to the usage counter, IOCTL_HARDRESET could be called that will decrease 
+the usage counter in a way that unloading will be possible

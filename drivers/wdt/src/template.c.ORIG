@@ -1,0 +1,474 @@
+/*************************************************************************
+ * (c) 2002 Datentechnik AG - Project: Dino
+ * Simple driver for Watchdogtimer
+ *
+ * $Id: template.c.ORIG,v 1.1 2004/04/07 14:37:40 ias Exp $
+ *
+ ************************************************************************/
+
+/*************************************************************************
+ *
+ * History:
+ *	$Log: template.c.ORIG,v $
+ *	Revision 1.1  2004/04/07 14:37:40  ias
+ *	initial switch driver
+ *	
+ *	Revision 1.1.1.1  2003/11/28 14:58:40  sst
+ *	initial
+ *	
+ *	Revision 1.1  2002/08/07 11:57:23  Assmus
+ *	Watchdogdriver Module (no HW support)
+ *	
+ *	
+ *	
+ ************************************************************************/
+
+#include <linux/config.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/fs.h>
+#include <linux/slab.h>
+#include <linux/version.h>
+#include <linux/init.h>
+#include <asm/uaccess.h>
+
+#include <linux/i2c.h>
+#include <linux/delay.h>
+
+#include "eeprom.h"
+#include "print.h"
+
+#ifdef MODULE
+extern int init_module(void);
+extern int cleanup_module(void);
+#endif /* def MODULE */
+
+static loff_t eeprom_lseek (struct file *file, loff_t offset, int origin);
+static ssize_t eeprom_read (struct file *file, char *buf, size_t count, loff_t *offset);
+static ssize_t eeprom_write (struct file *file, const char *buf, size_t count, loff_t *offset);
+static int eeprom_ioctl (struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg);
+static int eeprom_open (struct inode *inode, struct file *file);
+static int eeprom_release (struct inode *inode, struct file *file);
+
+static int eeprom_attach_adapter(struct i2c_adapter *adap);
+static int eeprom_detach_client(struct i2c_client *client);
+
+#ifdef MODULE
+static
+#else
+extern
+#endif
+       int __init eeprom_init(void);
+static int eeprom_cleanup(void);
+
+static struct file_operations wdtfops = {
+	owner:		THIS_MODULE,
+	llseek:		eeprom_lseek,
+	read:		eeprom_read,
+	write:		eeprom_write,
+	ioctl:		eeprom_ioctl,
+	open:		eeprom_open,
+	release:	eeprom_release,
+};
+
+static struct i2c_driver eeprom_driver = {
+	name:		"eeprom driver",
+	id:			I2C_DRIVERID_EXP0,
+	flags:		I2C_DF_NOTIFY,
+	attach_adapter:	eeprom_attach_adapter,
+	detach_client:	eeprom_detach_client,
+/*	command:	NULL,
+	inc_use:	NULL,
+	dec_use:	NULL, */
+};
+
+static struct i2c_client eeprom_client_template = {
+	name:		"i2c-eeprom client",
+	id:			1,
+	flags:		0,
+	addr:		EEPROM_I2C_ADDR,
+/*	adapter:	NULL, */
+	driver:		&eeprom_driver,
+/*	data:		NULL */
+};
+
+static struct i2c_adapter*	eeprom_adaps[I2C_ADAP_MAX];
+static int 					use_count[I2C_ADAP_MAX];
+spinlock_t					lock = SPIN_LOCK_UNLOCKED;
+
+static int eeprom_initialized;
+
+/* Note that the lseek function is called llseek in 2.1 kernels. But things
+   are complicated enough as is. */
+static loff_t eeprom_lseek (struct file *file, loff_t offset, int origin)
+{
+/*
+ *  origin 0: position from begining of eeprom
+ *  origin 1: relative from current position
+ *  origin 2: position from last eeprom address
+ */
+ 
+#ifdef DEBUG
+	struct inode *inode = file->f_dentry->d_inode;
+	PRINT("eeprom.o: i2c-%d lseek to %ld bytes relative to %d.\n",
+	       MINOR(inode->i_rdev),(long) offset,origin);
+#endif /* DEBUG */
+	switch (origin)
+	{
+	case 0:
+		file->f_pos = offset;
+		break;
+	case 1:
+		file->f_pos += offset;
+		break;
+	case 2:
+		file->f_pos = EEPROM_SIZE - offset;
+		break;
+	default:
+		return -EINVAL;
+	}
+ 
+	/* truncate position */
+	if (file->f_pos < 0)
+	{
+		file->f_pos = 0;
+		return(-EOVERFLOW);
+	}
+ 
+	if (file->f_pos >= EEPROM_SIZE)
+	{
+		file->f_pos = EEPROM_SIZE - 1;
+		return(-EOVERFLOW);
+	}
+ 
+	return ( file->f_pos );
+}
+
+static int eeprom_readdata(struct i2c_client* client, int addr, int len, char* buf)
+{
+    int     end = addr+len;
+    size_t  size;
+    char    cmd[2];
+ 
+    if ((addr < 0) || (addr >= EEPROM_SIZE))
+		return -EOVERFLOW;
+		
+    if (end > EEPROM_SIZE) {
+		end = EEPROM_SIZE;
+		len = end-addr;
+	}	
+ 
+    while (addr < end) {
+        // set address
+        cmd[0] = addr >> 8;
+        cmd[1] = addr & 0xFF;
+		if (i2c_master_send(client, cmd, 2) != 2) {
+			PRINT("i2c_master_send failed\n");
+            return -EIO;
+        }
+ 
+        size = end - addr;
+        if (size > MAX_I2C_XFER) {
+            size = MAX_I2C_XFER;
+        }
+ 
+		if (i2c_master_recv(client, buf, size) < size) {
+			PRINT("i2c_master_recv failed\n");
+            return -EIO;
+        }
+ 
+        buf += size;
+        addr += size;
+    }
+    return len;
+}
+
+static int eeprom_writedata(struct i2c_client* client, int addr, int len, char* buf)
+{
+	// first two bytes of buffer have to be left unused!
+    int     end = addr+len;
+    int     maxlen;
+    size_t  size;
+ 
+    if ((addr < 0) || (addr >= EEPROM_SIZE))
+		return -EOVERFLOW;
+		
+    if (end > EEPROM_SIZE) {
+		end = EEPROM_SIZE;
+		len = end-addr;
+	}	
+
+    while (addr < end) {
+        // set address
+        buf[0] = addr >> 8;
+        buf[1] = addr & 0xFF;
+ 
+        maxlen =  EEPROM_PAGE_SIZE - EEPROM_PAGE_OFFSET(addr & 0xFF);
+ 
+        size = end - addr;
+        if (size > maxlen) {
+            size = maxlen;
+        }
+ 
+		if (i2c_master_send(client, buf, size+2) != size+2) {
+			PRINT("i2c_master_send failed\n");
+            return -EIO;
+        }
+
+		// wait until eeprom is accessable again
+		// !attention: i2c-adapter (i.e. i2c-algo-8260 must implement I2C_ACK_TEST command)
+		while (i2c_control(client, I2C_ACK_TEST, client->addr) < 0) {
+			schedule();
+		}	
+ 
+        buf += size;
+        addr += size;
+    }
+
+    return len;
+}
+
+static ssize_t eeprom_read (struct file *file, char *buf, size_t count,
+                            loff_t *offset)
+{
+	char *tmp;
+	int ret;
+
+#ifdef DEBUG
+	struct inode *inode = file->f_dentry->d_inode;
+#endif /* DEBUG */
+
+	struct i2c_client *client = (struct i2c_client *)file->private_data;
+
+	tmp = kmalloc(count,GFP_KERNEL);
+	if (tmp==NULL)
+		return -ENOMEM;
+
+#ifdef DEBUG
+	PRINT("eeprom.o: /dev/i2c-%d: ",MINOR(inode->i_rdev));
+	PRINT("reading EEPROM 0x%llx, 0x%x\n", file->f_pos, count);
+#endif
+
+	ret = eeprom_readdata(client, file->f_pos, count, tmp);
+	if (ret >= 0) {
+		file->f_pos += ret;
+		ret = copy_to_user(buf,tmp,ret)?-EFAULT:ret;
+	}	
+	
+	kfree(tmp);
+	return ret;
+}
+
+static ssize_t eeprom_write (struct file *file, const char *buf, size_t count,
+                             loff_t *offset)
+{
+	int ret;
+	char *tmp;
+	struct i2c_client *client = (struct i2c_client *)file->private_data;
+
+#ifdef DEBUG
+	struct inode *inode = file->f_dentry->d_inode;
+#endif /* DEBUG */
+
+	/* copy user space data to kernel space. leave two bytes space for the address field */
+	tmp = kmalloc(count+2, GFP_KERNEL);
+	if (tmp==NULL)
+		return -ENOMEM;
+	if (copy_from_user(&tmp[2], buf, count)) {
+		kfree(tmp);
+		return -EFAULT;
+	}
+
+#ifdef DEBUG
+	PRINT("eeprom.o: /dev/i2c-%d: ",MINOR(inode->i_rdev));
+	PRINT("writing EEPROM 0x%llx, 0x%x\n", file->f_pos, count);
+#endif
+	
+	ret = eeprom_writedata(client, file->f_pos, count, tmp);
+	if (ret >= 0) {
+		file->f_pos += ret;
+	}	
+
+	kfree(tmp);
+	return ret;
+}
+
+static int eeprom_ioctl (struct inode *inode, struct file *file, unsigned int cmd, 
+                  unsigned long arg)
+{
+	struct i2c_client *client = (struct i2c_client *)file->private_data;
+
+#ifdef DEBUG
+	PRINT("eeprom.o: i2c-%d ioctl, cmd: 0x%x, arg: %lx.\n", 
+	       MINOR(inode->i_rdev),cmd, arg);
+#endif /* DEBUG */
+
+	switch ( cmd ) {
+	default:
+		return i2c_control(client,cmd,arg);
+	}
+	return 0;
+}
+
+static int eeprom_open (struct inode *inode, struct file *file)
+{
+	unsigned int minor = MINOR(inode->i_rdev);
+	struct i2c_client *client;
+
+	if ((minor >= I2C_ADAP_MAX) || ! (eeprom_adaps[minor])) {
+#ifdef DEBUG
+		PRINT("eeprom.o: Trying to open unattached adapter i2c-%d\n",
+		       minor);
+#endif
+		return -ENODEV;
+	}
+
+	spin_lock(&lock);
+	if (use_count[minor]) {
+		spin_unlock(&lock);
+		return -EBUSY;
+	}
+	use_count[minor]++;
+	spin_unlock(&lock);
+
+	/* Note that we here allocate a client for later use, but we will *not*
+	   register this client! Yes, this is safe. No, it is not very clean. */
+	if(! (client = kmalloc(sizeof(struct i2c_client),GFP_KERNEL)))
+		return -ENOMEM;
+	memcpy(client,&eeprom_client_template,sizeof(struct i2c_client));
+	client->adapter = eeprom_adaps[minor];
+	file->private_data = client;
+
+	if (eeprom_adaps[minor]->inc_use)
+		eeprom_adaps[minor]->inc_use(eeprom_adaps[minor]);
+#if LINUX_KERNEL_VERSION < KERNEL_VERSION(2,4,0)
+	MOD_INC_USE_COUNT;
+#endif /* LINUX_KERNEL_VERSION < KERNEL_VERSION(2,4,0) */
+
+#ifdef DEBUG
+	PRINT("eeprom.o: opened i2c-%d\n",minor);
+#endif
+	return 0;
+}
+
+static int eeprom_release (struct inode *inode, struct file *file)
+{
+	unsigned int minor = MINOR(inode->i_rdev);
+	kfree(file->private_data);
+	file->private_data=NULL;
+	use_count[minor]--;
+#ifdef DEBUG
+	PRINT("eeprom.o: Closed: i2c-%d\n", minor);
+#endif
+#if LINUX_KERNEL_VERSION < KERNEL_VERSION(2,4,0)
+	MOD_DEC_USE_COUNT;
+#else /* LINUX_KERNEL_VERSION >= KERNEL_VERSION(2,4,0) */
+	lock_kernel();
+#endif /* LINUX_KERNEL_VERSION < KERNEL_VERSION(2,4,0) */
+	if (eeprom_adaps[minor]->dec_use)
+		eeprom_adaps[minor]->dec_use(eeprom_adaps[minor]);
+#if LINUX_KERNEL_VERSION >= KERNEL_VERSION(2,4,0)
+	unlock_kernel();
+#endif /* LINUX_KERNEL_VERSION < KERNEL_VERSION(2,4,0) */
+	return 0;
+}
+
+static int eeprom_attach_adapter(struct i2c_adapter *adap)
+{
+	int i;
+	char name[8];
+
+	if ((i = i2c_adapter_id(adap)) < 0) {
+		PRINT("eeprom.o: Unknown adapter ?!?\n");
+		return -ENODEV;
+	}
+	if (i >= I2C_ADAP_MAX) {
+		PRINT("eeprom.o: Adapter number too large?!? (%d)\n",i);
+		return -ENODEV;
+	}
+
+	sprintf (name, "%d", i);
+	if (! eeprom_adaps[i]) {
+		eeprom_adaps[i] = adap;
+		PRINT("eeprom.o: Registered as char dev %d %d for '%s'\n", I2C_MAJOR, i, adap->name);
+	} else {
+		/* This is actually a detach_adapter call! */
+		eeprom_adaps[i] = NULL;
+#ifdef DEBUG
+		PRINT("eeprom.o: Adapter unregistered: %s\n",adap->name);
+#endif
+	}
+
+	return 0;
+}
+
+static int eeprom_detach_client(struct i2c_client *client)
+{
+	return 0;
+}
+
+int __init eeprom_init(void)
+{
+	int res;
+
+	PRINT("eeprom.o: init eeprom driver module\n");
+
+	eeprom_initialized = 0;
+	if (register_chrdev(I2C_MAJOR,"eeprom",&eeprom_fops)) {
+		PRINT("eeprom.o: unable to get major %d for i2c bus\n", I2C_MAJOR);
+		return -EIO;
+	}
+	eeprom_initialized ++;
+
+	if ((res = i2c_add_driver(&eeprom_driver))) {
+		PRINT("eeprom.o: Driver registration failed, module not inserted.\n");
+		eeprom_cleanup();
+		return res;
+	}
+	eeprom_initialized ++;
+	return 0;
+}
+
+int eeprom_cleanup(void)
+{
+	int res;
+
+	if (eeprom_initialized >= 2) {
+		if ((res = i2c_del_driver(&eeprom_driver))) {
+			PRINT("eeprom.o: Driver deregistration failed, "
+			       "module not removed.\n");
+			return res;
+		}
+	eeprom_initialized ++;
+	}
+
+	if (eeprom_initialized >= 1) {
+		if ((res = unregister_chrdev(I2C_MAJOR,"eeprom"))) {
+			PRINT("eeprom.o: unable to release major %d for i2c bus\n",
+			       I2C_MAJOR);
+			return res;
+		}
+		eeprom_initialized --;
+	}
+	return 0;
+}
+
+EXPORT_NO_SYMBOLS;
+
+#ifdef MODULE
+
+MODULE_AUTHOR("Ingo Assmus");
+MODULE_DESCRIPTION("Soft Watchdog driver");
+
+int init_module(void)
+{
+	return wdt_init();
+}
+
+int cleanup_module(void)
+{
+	return wdt_cleanup();
+}
+
+#endif /* def MODULE */
+
