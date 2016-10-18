@@ -1550,7 +1550,6 @@ static struct spi_driver spidev_spi_driver = {
 
 static int __init spidev_init(void)
 {
-#if 0
 	int status;
 
 	/* Claim our 256 reserved device numbers.  Then register a class
@@ -1574,8 +1573,8 @@ static int __init spidev_init(void)
 		unregister_chrdev(SPIDEV_MAJOR, spidev_spi_driver.driver.name);
 	}
 	return status;
-#endif
 }
+#if 0
 module_init(spidev_init);
 
 static void __exit spidev_exit(void)
@@ -1590,3 +1589,4 @@ MODULE_AUTHOR("Andrea Paterniani, <a.paterniani@swapp-eng.it>");
 MODULE_DESCRIPTION("User mode SPI device interface");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("spi:spidev");
+#endif

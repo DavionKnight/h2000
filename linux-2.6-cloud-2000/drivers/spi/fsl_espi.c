@@ -678,14 +678,14 @@ static struct of_platform_driver fsl_espi_driver = {
 
 static int __init fsl_espi_init(void)
 {
-//	return of_register_platform_driver(&fsl_espi_driver);
+	return of_register_platform_driver(&fsl_espi_driver);
 }
 
 static void __exit fsl_espi_exit(void)
 {
 	of_unregister_platform_driver(&fsl_espi_driver);
 }
-
+#if 0 /*delete kernel mode spi by zhangjj 2016-10-18*/
 module_init(fsl_espi_init);
 module_exit(fsl_espi_exit);
 
@@ -693,3 +693,4 @@ MODULE_AUTHOR("Chen Gong <g.chen@freescale.com>, "
 	      "Jerry Huang <Chang-Ming.Huang@freescale.com>");
 MODULE_DESCRIPTION("Freescale eSPI Driver");
 MODULE_LICENSE("GPL");
+#endif
