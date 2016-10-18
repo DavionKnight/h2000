@@ -1,0 +1,9 @@
+#!/bin/sh
+
+echo "Kopiere Watchdog Driver Dateien into NFS "
+cp ./build/cop4/wdt.o /misc/nfs/172.16.0.186/flashfs/lib/modules/2.4.23-rthal5/user
+cp ./build/cop4/RegMeAtWDT /misc/nfs/172.16.0.186/flashfs/usr/bin
+cp ./build/cop4/TriggerWDT /misc/nfs/172.16.0.186/flashfs/usr/bin
+cp ./build/cop4/Reg_and_Remove_me /misc/nfs/172.16.0.186/flashfs/usr/bin
+cp ./build/cop4/RegATask /misc/nfs/172.16.0.186/flashfs/usr/bin
+cp ./etc/init.d/wdt /misc/nfs/172.16.0.186/flashfs/etc/init.d
