@@ -34,7 +34,7 @@ int fpga_test()
 		data[1] = 0xcd;
 		data[2] = 0xef;
 		data[3] = i&0xff;
-		//usleep(500000);
+		usleep(5);
 		fpga_spi_write(0x1040,(unsigned char *)data, 4);
 		fpga_spi_read(0x1040, (unsigned char *)rdata, 4);
 		if(data[3]!=rdata[3])

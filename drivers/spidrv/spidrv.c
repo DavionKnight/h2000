@@ -42,6 +42,8 @@
 #define SPIDRV_PRINT(format,...) zlog() /*need add*/
 #endif  
 
+int initialized = 0;
+
 struct spi_device spidev;
 struct sembuf bufLock, bufUnlock;
 int semid;
@@ -301,7 +303,7 @@ static int spidrv_semlock_init()
 	semid = semget(0x0812, 1, IPC_CREAT|IPC_EXCL|0666);
 	if(-1 == semid)
 	{
-		printf("sem has been created\n");
+		initialized = 1;
 		semid = semget(0x0812, 1, IPC_CREAT|0666);
 		if (semid == -1){  
 			return -1;  
@@ -309,7 +311,8 @@ static int spidrv_semlock_init()
 	}
 	else
 	{
-		printf("sem created\n");
+//		printf("sem created\n");
+		initialized = 0;
 		arg.val = 1;
 		semctl(semid, 0, SETVAL, arg);  
 	}
@@ -350,6 +353,8 @@ static int spidrv_setup_init()
 {
 	int i = 0;
 
+	semop(semid, &bufLock, 1);
+
 	spi_dev_init(&spidev);
 
 	for(i = 0; i <4; i++)
@@ -361,6 +366,8 @@ static int spidrv_setup_init()
 
 		spi_setup(&spidev);
 	}
+
+	semop(semid, &bufUnlock, 1);
 
 	return 0;
 }
@@ -379,13 +386,16 @@ int spidrv_init()
 		return -1;
 	}
 	/*need sem lock, I think*/
-	if(spidrv_setup_init())
+	if(0 == initialized)
 	{
-		SPIDRV_PRINT("spidrv spi setup init error\n");	
-		return -1;
+		if(spidrv_setup_init())
+		{
+			SPIDRV_PRINT("spidrv spi setup init error\n");	
+			return -1;
+		}
+		SPIDRV_PRINT("Initialize spidrv successfully\n");	
 	}
 
-	SPIDRV_PRINT("Initialize spidrv successfully\n");	
 
 	return 0;
 }

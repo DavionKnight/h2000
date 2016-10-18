@@ -22,7 +22,7 @@ int dpll_test()
 
 	while(1)
 	{
-//		usleep(800000);
+		usleep(5);
 		dpll_spi_read(0x00,(unsigned char *)data, 2);
 		if((data[0]!=0xa8) && (data[1]!=0x7a))
 		{

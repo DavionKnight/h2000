@@ -35,7 +35,7 @@
 #define SPI_MODE_MS	(0x80000000 >> 6)	/* Always master */
 #define SPI_MODE_EN	(0x80000000 >> 7)	/* Enable interface */
 
-#define SPI_TIMEOUT		1000
+#define SPI_TIMEOUT		10000
 
 #define CSMODE_PM_MAX		(0xF)
 #define CSMODE_PM_MIN		(0x2)
