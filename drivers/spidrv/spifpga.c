@@ -22,7 +22,7 @@ int fpga_test()
 
 	while(1)
 	{
-		fpga_spi_read(1,(unsigned char *)data, 4);
+		fpga_spi_read(1,(unsigned char *)data, 4, 0);
 
 		if(0x16 != data[3])
 		{
@@ -35,8 +35,8 @@ int fpga_test()
 		data[2] = 0xef;
 		data[3] = i&0xff;
 		usleep(5);
-		fpga_spi_write(0x1040,(unsigned char *)data, 4);
-		fpga_spi_read(0x1040, (unsigned char *)rdata, 4);
+		fpga_spi_write(0x1040,(unsigned char *)data, 4, 0);
+		fpga_spi_read(0x1040, (unsigned char *)rdata, 4, 0);
 		if(data[3]!=rdata[3])
 		{
 			printf("fpga--------data[3]=0x%02x,rdata[3]=0x%02x\n",data[3],rdata[3]);
@@ -59,8 +59,6 @@ int main(int argc, char *argv[])
 {
 	int pid;
 	void *status;
-	char arg1 = 0, arg2 = 1;
-	pthread_t id_1,id_2,id_3,id_4,id_5;
 
 	if(-1 == spidrv_init())
 	{

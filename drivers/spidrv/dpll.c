@@ -144,14 +144,14 @@ int main(int argc, char *argv[])
 	}
 
 	if (argc == 2 && argv[1][0] == 't') {
-		selftest(fd);
+	//	selftest(fd);
 	}
 	else if (argc == 4 && argv[1][0] == 'r') {
 
                 sscanf(argv[2], "%hx", &addr);
                 sscanf(argv[3], "%hd", &len);
                 printf("read %d bytes at 0x%04x:", len, (unsigned short)addr);
-		if(!dpll_spi_read(addr,(unsigned char *)data, len))
+		if(!dpll_spi_read(addr,(unsigned char *)data, len, 0))
 		{
 			pdata(data, len);
 			printf(" done\n");
@@ -189,7 +189,7 @@ int main(int argc, char *argv[])
                         len >>= 1;
                         printf("write %d bytes at 0x%04x:", len, (unsigned short)addr);
                         pdata(data, len);
-                        if (!dpll_spi_write(addr, data, len))
+                        if (!dpll_spi_write(addr, data, len, 0))
                                 printf(" done\n");
 			else
 				printf(" error\n");
