@@ -23,7 +23,7 @@ int dpll_test()
 	while(1)
 	{
 		usleep(5);
-		dpll_spi_read(0x00,(unsigned char *)data, 2, 0);
+		dpll_spi_read(0x00,(unsigned char *)data, 2);
 		if((data[0]!=0xa8) && (data[1]!=0x7a))
 		{
 			printf("dpll============addr 0, data[0]=0x%02x,data[1]=0x%02x\n",
@@ -31,8 +31,8 @@ int dpll_test()
 			break;
 		}
 		data[0] = i&0xff;
-		dpll_spi_write(0x00d3,(unsigned char *)data, 2, 0);
-		dpll_spi_read(0x00d3,(unsigned char *)rdata, 2, 0);
+		dpll_spi_write(0x00d3,(unsigned char *)data, 2);
+		dpll_spi_read(0x00d3,(unsigned char *)rdata, 2);
 		if(rdata[0] != data[0])
 		{
 			printf("dpll============addr 0xd3, data[0]=0x%02x,rdata[0]=0x%02x\n",

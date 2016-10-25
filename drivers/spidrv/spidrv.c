@@ -232,7 +232,7 @@ int fpga_spi_write(unsigned short addr, unsigned char *data, size_t count, unsig
 
 	return 0;
 }
-int dpll_spi_read(unsigned short addr, unsigned char *data, size_t count, unsigned char slot)
+int dpll_spi_read(unsigned short addr, unsigned char *data, size_t count)
 {
 	int ret = 0;
 	unsigned int len = 0;
@@ -267,7 +267,7 @@ int dpll_spi_read(unsigned short addr, unsigned char *data, size_t count, unsign
 
 	return 0;
 }
-int dpll_spi_write(unsigned short addr, unsigned char *data, size_t count, unsigned char slot)
+int dpll_spi_write(unsigned short addr, unsigned char *data, size_t count)
 {
 	int ret = 0;
 	unsigned int len = 0;
