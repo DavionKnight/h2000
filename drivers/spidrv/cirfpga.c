@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
 		sscanf(argv[3], "%hx", &addr);
 		sscanf(argv[4], "%hx", &data);
 		printf("slot num %x,write addr 0x%x data 0x%04x\n", slot_num,addr,data);
-		fpga_rm_rt_write(slot_num, addr, &data, 1); 
+	//	fpga_rm_rt_write(slot_num, addr, &data, 1); 
 	}
 	else
 	{

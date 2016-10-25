@@ -17,6 +17,25 @@
 #define		ERR_FPGA_DRV_LOCK		-4
 #define		ERR_FPGA_DRV_ARGV		-5
 
+#define	FPGA_RT_CLAU_ADDR		(0x2020)
+#define	FPGA_RT_BUFF_ADDR		(0x2200)
+#define	FPGA_RT_CMD_BUFF_ADDR	(0x0400)
+#define	FPGA_RT_CLAU_UNIT_SIZE	(0x0020)
+#define FPGA_RT_RD_OVER_FLGA	(0x2002)
+
+#define FPGA_RT_WR_ADDR			(0x2010)
+
+//#define	FPGA_CR_CLAU_ADDR		(0x2020)
+#define	FPGA_CR_CLAU_ADDR		(0x2100)
+#define	FPGA_CR_BUFF_ADDR		(0x2400)
+#define	FPGA_CR_CMD_BUFF_ADDR	(0x0800)
+#define	FPGA_CR_CLAU_UNIT_SIZE	(0x0020)
+#define FPGA_CR_EN_ADDR			(0x2040)
+
+#define FPGA_RT_CLAU			32
+#define FPGA_CR_CLAU			128
+#define FPGA_CLAUSE_NUM			168
+
 int spidrv_init();
 
 int spidrv_exit();
@@ -43,9 +62,9 @@ int fpga_rm_cir_en_blk(unsigned short *enbuf, unsigned int size);
 
 int fpga_rm_cir_read(int clause, unsigned char slot, unsigned short addr, unsigned short *pbuf, unsigned int size);
 
-int fpga_rm_rt_read(int clause, unsigned char slot, unsigned short addr, unsigned short *pbuf, unsigned int size);
+//int fpga_rm_rt_read(int clause, unsigned char slot, unsigned short addr, unsigned short *pbuf, unsigned int size);
 
-int fpga_rm_rt_write(unsigned char slot, unsigned short addr, unsigned short *pbuf, unsigned int size);
+//int fpga_rm_rt_write(unsigned char slot, unsigned short addr, unsigned short *pbuf, unsigned int size);
 
 
 

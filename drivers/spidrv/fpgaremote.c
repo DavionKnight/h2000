@@ -47,29 +47,9 @@ typedef struct s_fpga_rm_argv
 |--------------------------------------0x2FFF
  */
 
-#define	FPGA_RT_CLAU_ADDR		(0x2020)
-#define	FPGA_RT_BUFF_ADDR		(0x2200)
-#define	FPGA_RT_CMD_BUFF_ADDR	(0x0400)
-#define	FPGA_RT_CLAU_UNIT_SIZE	(0x0020)
-#define FPGA_RT_RD_OVER_FLGA	(0x2002)
-
-#define FPGA_RT_WR_ADDR			(0x2010)
-
-//#define	FPGA_CR_CLAU_ADDR		(0x2020)
-#define	FPGA_CR_CLAU_ADDR		(0x2100)
-#define	FPGA_CR_BUFF_ADDR		(0x2400)
-#define	FPGA_CR_CMD_BUFF_ADDR	(0x0800)
-#define	FPGA_CR_CLAU_UNIT_SIZE	(0x0020)
-#define FPGA_CR_EN_ADDR			(0x2040)
-
-#define FPGA_RT_CLAU			32
-#define FPGA_CR_CLAU			128
-#define FPGA_CLAUSE_NUM			168
 
 //s_FPGA_RM_ARGV clausRtMap[FPGA_RT_CLAU];
 s_FPGA_RM_ARGV clausCrMap[FPGA_CR_CLAU] = {0};
-static unsigned char rtClause = 0;
-static unsigned char rtReadOver[32] = {0};
 
 int fpga_rm_cir_read_set(int clause, unsigned char slot, unsigned short addr, unsigned int size)
 {
@@ -230,6 +210,7 @@ int fpga_rm_cir_read(int clause, unsigned char slot, unsigned short addr, unsign
 	return 0;
 
 }
+#if 0
 int fpga_rm_rt_read(int clause, unsigned char slot, unsigned short addr, unsigned short *pbuf, unsigned int size)
 {
 	unsigned int data[FPGA_RT_CLAU_UNIT_SIZE/2] = {0};
@@ -277,7 +258,6 @@ int fpga_rm_rt_read(int clause, unsigned char slot, unsigned short addr, unsigne
 
 
 }
-
 int fpga_rm_rt_write(unsigned char slot, unsigned short addr, unsigned short *pbuf, unsigned int size)
 {
 	unsigned char data[8] = {0};
@@ -302,6 +282,7 @@ int fpga_rm_rt_write(unsigned char slot, unsigned short addr, unsigned short *pb
 
 }
 
+#endif
 
 
 

@@ -19,7 +19,8 @@
 int main(int argc, char *argv[])
 {
 	int ret = 0;
-	unsigned short addr = 0,data;
+	unsigned short addr = 0,len;
+	unsigned char data[32] = {0};
 	unsigned char slot_num = 0;
 	int i = 0;	
 
@@ -29,30 +30,40 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-	if (argc == 4 && argv[1][0] == 'r') {
+	if (argc == 5 && argv[1][0] == 'r') {
 		sscanf(argv[2], "%hhx", &slot_num);
 		sscanf(argv[3], "%hx", &addr);
+		sscanf(argv[4], "%hd", &len);
 #if 0
 		printf("0 %s\n",argv[0]);
 		printf("1 %s\n",argv[1]);
 		printf("2 %s\n",argv[2]);
 #endif
-		printf("slot num %x addr 0x%04x:\n", slot_num, (unsigned short)addr);
-		data = 0x7E0;			//last realtime read clause
-		fpga_rm_rt_read(0, slot_num, addr, (unsigned short *)&data, 1);
-		printf("The result:\n0x%04x\n",data);
+		printf("slot num %x addr 0x%04x len %d:\n", slot_num, (unsigned short)addr, len);
+		fpga_spi_read(addr, (unsigned char *)data, len, slot_num);
+		printf("The result:\n");
+		for(i = 0; i < len; i++)
+		{	
+			printf("0x%02x ",data[i]);
+			if((i+1)%16 == 0)
+				printf("\n");
+		}
+		printf("\n");
 	}
 	else if (argc == 5 && argv[1][0] == 'w') {
+		unsigned short data;
 		sscanf(argv[2], "%hhx", &slot_num);
 		sscanf(argv[3], "%hx", &addr);
 		sscanf(argv[4], "%hx", &data);
-		printf("slot num %x,write addr 0x%x data 0x%04x\n", slot_num,addr,data);
-		fpga_rm_rt_write(slot_num, addr, &data, 1); 
+		printf("slot num %x,write addr 0x%x data 0x%04x\n", slot_num, addr, data);
+		fpga_spi_write(addr, (unsigned char *)&data, sizeof(data), slot_num); 
 	}
 	else
 	{
-		printf("remotefpga read <slot:hex> <addr:hex>\n");
-		printf("remotefpga write <slot:hex> <addr:hex> <data:hex>\n");
+		printf("remotefpga read <slot:hex> <addr:hex> <len:dec>\n");
+		printf("remotefpga write <slot:hex> <addr:hex> <data:hex> <len:dec>\n");
+		printf("slot <0-0xf> unit board link GU08 TU02\n");
+		printf("     <0x10-0x11> master board link PXPXMM\n");
 	}
 	
 	spidrv_exit();

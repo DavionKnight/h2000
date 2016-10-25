@@ -189,11 +189,20 @@ static int mix_spi_read(struct spi_device *spi,unsigned short addr, unsigned cha
 	
 }
 
+static unsigned char rtClause = 0;
 int fpga_spi_read(unsigned short addr, unsigned char *data, size_t count, unsigned char slot)
 {
 	int ret = 0;
 	unsigned int len = 0;
 	unsigned short address = 0;
+
+        if((count > FPGA_CR_CLAU_UNIT_SIZE))
+        {
+                printf("Read length should be less than 32\n");
+                return ERR_FPGA_DRV_ARGV;
+        }
+	if(!data)
+		return ERR_FPGA_DRV_ARGV;
 
 	semop(semid, &bufLock, 1);
 
@@ -203,8 +212,57 @@ int fpga_spi_read(unsigned short addr, unsigned char *data, size_t count, unsign
 	spidev.bits_per_word = 8;  /*need verify*/
 
 	spi_setup(&spidev);
+printf("slot =0x%x\n",slot);
+	if((slot == 0x10) || (slot == 0x11)) /*read local fpga*/
+	{
+		mix_spi_read(&spidev, (unsigned short)addr, data, count);
+	}
+	else if(slot <= 0xf) /*remote board fpga*/
+	{
+		unsigned int rdata[FPGA_RT_CLAU_UNIT_SIZE/2] = {0};
+		unsigned int reg_addr;
+		unsigned char data_set[4] = {0};
+		unsigned int data_rw = 0,bufaddr = 0, clause = 0;
+		unsigned int value_en;
+		unsigned short read_reg;
+		unsigned int delay_count = 1000;
 
-	mix_spi_read(&spidev, (unsigned short)addr, data, count);
+		clause = rtClause++;
+		if(rtClause >= FPGA_RT_CLAU)
+			rtClause = 0;
+		
+		printf("clause = %d,unitboard slot = 0x%x, addr = 0x%02x\n", clause, slot,addr);
+		bufaddr = FPGA_RT_CMD_BUFF_ADDR + clause*FPGA_RT_CLAU_UNIT_SIZE;
+		printf("bufaddr =0x%x\n",bufaddr);
+		read_reg = FPGA_RT_CLAU_ADDR + clause;
+
+		data_set[0] = ((slot & 0x0f) << 4) | ((addr & 0xf00) >> 8);
+		data_set[1] = addr & 0xff;
+		data_set[2] = (0x5 << 5) | ((bufaddr&0x1f00) >> 8);
+		data_set[3] = ((bufaddr&0xe0)|(0x1f));
+
+		memcpy(&data_rw,data_set,sizeof(data_rw));
+printf("data_rw = 0x%08x\n",data_rw);
+
+		mix_spi_write(&spidev, (unsigned short)read_reg,(unsigned char *)&data_rw, sizeof(data_rw));
+
+		do{
+			mix_spi_read(&spidev, (unsigned short)FPGA_RT_RD_OVER_FLGA, (unsigned char *)&value_en, sizeof(value_en));
+			if((value_en == 0)||(delay_count<1))
+				break;
+		}while(delay_count--);
+
+		reg_addr = FPGA_RT_BUFF_ADDR + clause * FPGA_RT_CLAU_UNIT_SIZE/2;
+
+		mix_spi_read(&spidev, (unsigned short)reg_addr, (unsigned char *)rdata, sizeof(rdata));
+	unsigned short *pbuf = (unsigned short *)data;
+	unsigned int i = 0;
+        for(i = 0; i < count/2; i++)
+                pbuf[i] = i%2?((rdata[i/2]>>16)&0xffff):(rdata[i/2]&0xffff);	
+//		memcpy(data, rdata, count);
+	}
+	else
+		printf("fpga_spi_read slot %d error\n", slot);
 
 	semop(semid, &bufUnlock, 1);
 
@@ -217,6 +275,8 @@ int fpga_spi_write(unsigned short addr, unsigned char *data, size_t count, unsig
 	unsigned int len = 0;
 	unsigned short address = 0;
 
+	if(!data)
+		return ERR_FPGA_DRV_ARGV;
 	semop(semid, &bufLock, 1);
 	
 	spidev.max_speed_hz = 6500000;//the real rate 6.25M
@@ -226,7 +286,32 @@ int fpga_spi_write(unsigned short addr, unsigned char *data, size_t count, unsig
 
 	spi_setup(&spidev);
 
-	mix_spi_write(&spidev, (unsigned short)addr, data, count);
+	if((slot == 0x10) || (slot == 0x11)) /*read local fpga*/
+	{
+		mix_spi_write(&spidev, (unsigned short)addr, data, count);
+	}
+	else if(slot <= 0xf) /*remote board fpga*/
+	{
+		unsigned char wdata[8] = {0};
+		unsigned short *ptr = (unsigned short *)data;
+		unsigned int wrdata=0;
+
+
+		for(ptr; ptr < (unsigned short *)(data + count); ptr++)
+		{
+			wdata[0] = ((slot & 0x0f) << 4) | ((addr & 0xf00) >> 8);
+			wdata[1] = addr & 0xff;
+			wdata[2] = (*ptr & 0xff00) >> 8;
+			wdata[3] = *ptr & 0xff;
+			memcpy(&wrdata, wdata,sizeof(wrdata));
+			mix_spi_write(&spidev, FPGA_RT_WR_ADDR, (unsigned char *)&wrdata, sizeof(wrdata));
+			usleep(10);
+			addr ++;
+		}
+
+	}
+	else
+		printf("fpga_spi_write slot %d error\n", slot);
 
 	semop(semid, &bufUnlock, 1);
 
