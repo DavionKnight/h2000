@@ -196,11 +196,11 @@ int fpga_spi_read(unsigned short addr, unsigned char *data, size_t count, unsign
 	unsigned int len = 0;
 	unsigned short address = 0;
 
-        if((count > FPGA_CR_CLAU_UNIT_SIZE))
+/*        if((count > FPGA_CR_CLAU_UNIT_SIZE))
         {
-                printf("Read length should be less than 32\n");
+                printf("Read length should be less than 32 count=%d\n",count);
                 return ERR_FPGA_DRV_ARGV;
-        }
+        }*/
 	if(!data)
 		return ERR_FPGA_DRV_ARGV;
 
@@ -212,7 +212,7 @@ int fpga_spi_read(unsigned short addr, unsigned char *data, size_t count, unsign
 	spidev.bits_per_word = 8;  /*need verify*/
 
 	spi_setup(&spidev);
-printf("slot =0x%x\n",slot);
+
 	if((slot == 0x10) || (slot == 0x11)) /*read local fpga*/
 	{
 		mix_spi_read(&spidev, (unsigned short)addr, data, count);
@@ -226,14 +226,15 @@ printf("slot =0x%x\n",slot);
 		unsigned int value_en;
 		unsigned short read_reg;
 		unsigned int delay_count = 1000;
+		unsigned short *pbuf = (unsigned short *)data;
+		unsigned int i = 0;
 
 		clause = rtClause++;
 		if(rtClause >= FPGA_RT_CLAU)
 			rtClause = 0;
-		
-		printf("clause = %d,unitboard slot = 0x%x, addr = 0x%02x\n", clause, slot,addr);
+
+//		printf("clause = %d,unitboard slot = 0x%x, addr = 0x%02x\n", clause, slot,addr);
 		bufaddr = FPGA_RT_CMD_BUFF_ADDR + clause*FPGA_RT_CLAU_UNIT_SIZE;
-		printf("bufaddr =0x%x\n",bufaddr);
 		read_reg = FPGA_RT_CLAU_ADDR + clause;
 
 		data_set[0] = ((slot & 0x0f) << 4) | ((addr & 0xf00) >> 8);
@@ -242,7 +243,6 @@ printf("slot =0x%x\n",slot);
 		data_set[3] = ((bufaddr&0xe0)|(0x1f));
 
 		memcpy(&data_rw,data_set,sizeof(data_rw));
-printf("data_rw = 0x%08x\n",data_rw);
 
 		mix_spi_write(&spidev, (unsigned short)read_reg,(unsigned char *)&data_rw, sizeof(data_rw));
 
@@ -255,11 +255,8 @@ printf("data_rw = 0x%08x\n",data_rw);
 		reg_addr = FPGA_RT_BUFF_ADDR + clause * FPGA_RT_CLAU_UNIT_SIZE/2;
 
 		mix_spi_read(&spidev, (unsigned short)reg_addr, (unsigned char *)rdata, sizeof(rdata));
-	unsigned short *pbuf = (unsigned short *)data;
-	unsigned int i = 0;
-        for(i = 0; i < count/2; i++)
-                pbuf[i] = i%2?((rdata[i/2]>>16)&0xffff):(rdata[i/2]&0xffff);	
-//		memcpy(data, rdata, count);
+		for(i = 0; i < count/2; i++)
+			pbuf[i] = i%2?((rdata[i/2]>>16)&0xffff):(rdata[i/2]&0xffff);	
 	}
 	else
 		printf("fpga_spi_read slot %d error\n", slot);

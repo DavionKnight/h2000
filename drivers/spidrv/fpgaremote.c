@@ -59,9 +59,10 @@ int fpga_rm_cir_read_set(int clause, unsigned char slot, unsigned short addr, un
 
 	if((clause<0)||(clause>=FPGA_CR_CLAU))
 		return ERR_FPGA_DRV_ARGV;
+
 	if((size > FPGA_CR_CLAU_UNIT_SIZE))
 	{
-		printf("Read length should be less than 32\n");
+		printf("Read length should be less than 32, size = %d\n", size);
 		return ERR_FPGA_DRV_ARGV;
 	}
 
@@ -80,7 +81,7 @@ int fpga_rm_cir_read_set(int clause, unsigned char slot, unsigned short addr, un
 
 	memcpy(&data_rw,data,sizeof(data_rw));
 	//	printf("data_rw=0x%x data3=0x%x size=0x%x\n",data_rw,data[3],size);
-	return fpga_spi_write(read_reg, (unsigned char *)&data_rw, sizeof(data), 0);
+	return fpga_spi_write(read_reg, (unsigned char *)&data_rw, sizeof(data), 0x10);
 
 }
 
@@ -92,7 +93,6 @@ int fpga_rm_cir_read_get(int *clause)
 	{
 		if(!clausCrMap[i].used)
 		{
-			printf("i =%d, clausCrMap[%d].used = %d\n",i,i,clausCrMap[i].used);
 			break;	
 		}
 	}
@@ -126,14 +126,14 @@ int fpga_rm_cir_en(int clause)
 	en_bit  = clause%16;
 
 	do{
-		fpga_spi_read(en_addr, (unsigned char *)&data, sizeof(data), 0);
+		fpga_spi_read(en_addr, (unsigned char *)&data, sizeof(data), 0x10);
 		if(((data & 0xffff) == 0)||(delay_count<1))
 			break;
 	}while(delay_count--);
 
 	data = 1<<en_bit;
 	//	printf("en_addr=0x%x,en data=0x%x\n",en_addr,data);
-	return fpga_spi_write(en_addr, (unsigned char *)&data, sizeof(data), 0);
+	return fpga_spi_write(en_addr, (unsigned char *)&data, sizeof(data), 0x10);
 }
 
 /*
@@ -154,14 +154,14 @@ int fpga_rm_cir_en_blk(unsigned short *enbuf, unsigned int size)
 	{
 		en_addr = FPGA_CR_EN_ADDR + i;
 		do{
-			fpga_spi_read(en_addr, (unsigned char *)&data, sizeof(data), 0);
+			fpga_spi_read(en_addr, (unsigned char *)&data, sizeof(data), 0x10);
 			if(((data & 0xffff) == 0)||(delay_count<1))
 				break;
 		}while(delay_count--);
 
 		data = 0;
 		data |= enbuf[i];
-		fpga_spi_write(en_addr, (unsigned char *)&data, sizeof(data), 0);
+		fpga_spi_write(en_addr, (unsigned char *)&data, sizeof(data), 0x10);
 	}
 	return 0;
 }
@@ -186,7 +186,7 @@ int fpga_rm_cir_read(int clause, unsigned char slot, unsigned short addr, unsign
 		return ERR_FPGA_DRV_ARGV;
 	if((clausCrMap[clause].slot != slot) ||(clausCrMap[clause].addr != addr) || (clausCrMap[clause].size != size))
 	{
-		printf("Oper para is not confirm with config");
+		printf("fpga_rm_cir_read para is not confirm with configure\n");
 		return ERR_FPGA_DRV_ARGV;
 	}
 
@@ -194,7 +194,7 @@ int fpga_rm_cir_read(int clause, unsigned char slot, unsigned short addr, unsign
 	en_bit  = clause%16;
 
 	do{
-		fpga_spi_read(en_addr, (unsigned char *)&value_en, sizeof(value_en), 0);
+		fpga_spi_read(en_addr, (unsigned char *)&value_en, sizeof(value_en), 0x10);
 		if(((value_en&(1 << en_bit)) == 0)||(delay_count<1))
 			break;
 	}while(delay_count--);
@@ -202,7 +202,7 @@ int fpga_rm_cir_read(int clause, unsigned char slot, unsigned short addr, unsign
 	reg_addr = FPGA_CR_BUFF_ADDR + clause * FPGA_CR_CLAU_UNIT_SIZE/2;
 
 	//	pthread_mutex_lock(&mutex_cir);
-	fpga_spi_read(reg_addr, (unsigned char *)data, sizeof(data), 0);
+	fpga_spi_read(reg_addr, (unsigned char *)data, sizeof(data), 0x10);
 	for(i = 0; i < size; i++)
 		pbuf[i] = i%2?((data[i/2]>>16)&0xffff):(data[i/2]&0xffff);
 	//	pthread_mutex_unlock(&mutex_cir);

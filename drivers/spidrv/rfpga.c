@@ -60,10 +60,12 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-		printf("remotefpga read <slot:hex> <addr:hex> <len:dec>\n");
-		printf("remotefpga write <slot:hex> <addr:hex> <data:hex> <len:dec>\n");
+		printf("\nrfpga read <slot:hex> <addr:hex> <len:dec>\n");
+		printf("rfpga write <slot:hex> <addr:hex> <data:hex>\n\n");
 		printf("slot <0-0xf> unit board link GU08 TU02\n");
-		printf("     <0x10-0x11> master board link PXPXMM\n");
+		printf("     <0x10-0x11> master board link PXPXMM\n\n");
+		printf("demo:	rfpga read 0x0 0x0 2\n");
+		printf("	rfpga write 0x0 0x85 0xee\n");
 	}
 	
 	spidrv_exit();
