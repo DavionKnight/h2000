@@ -41,15 +41,15 @@ int main(int argc, char *argv[])
 		printf("2 %s\n",argv[2]);
 #endif
 		printf("slot num %x addr 0x%04x len %d:\n", slot_num, (unsigned short)addr, len);
-		ret = fpga_rm_cir_read_get(&clause);
+		ret = fpga_read_remote_get(&clause);
 		if(ret < 0)
 		{
 			printf("ret = %d, error\n",ret);
 			return 0;
 		}
-		fpga_rm_cir_read_set(clause, slot_num, addr, len);
-		fpga_rm_cir_en(clause);
-		fpga_rm_cir_read(clause, slot_num, addr, (unsigned short *)data, len);
+		fpga_read_remote_set(clause, slot_num, addr, len);
+		fpga_read_remote_en(clause);
+		fpga_read_remote(clause, slot_num, addr, (unsigned short *)data, len);
 		printf("The result:\n");
 		for(i = 0;i < len;i++)
 		{

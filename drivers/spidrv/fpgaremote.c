@@ -24,7 +24,7 @@
 typedef struct s_fpga_rm_argv
 {
     unsigned char	slot;    // 0/1/2/3/11
-    unsigned short	addr;    // 0x0000~0x0FFF
+    unsigned int 	addr;    // 0x0000~0x0FFF
     unsigned int	size;    // max FPGA_COPRO_MAX_SIZE
     unsigned short	*pbuf;	// 
     unsigned char	used;	// 
@@ -51,7 +51,7 @@ typedef struct s_fpga_rm_argv
 //s_FPGA_RM_ARGV clausRtMap[FPGA_RT_CLAU];
 s_FPGA_RM_ARGV clausCrMap[FPGA_CR_CLAU] = {0};
 
-int fpga_rm_cir_read_set(int clause, unsigned char slot, unsigned short addr, unsigned int size)
+int fpga_read_remote_set(int clause, unsigned char slot, unsigned int addr, unsigned int size)
 {
 	unsigned char data[4] = {0};
 	unsigned short read_reg;
@@ -85,7 +85,7 @@ int fpga_rm_cir_read_set(int clause, unsigned char slot, unsigned short addr, un
 
 }
 
-int fpga_rm_cir_read_get(int *clause)
+int fpga_read_remote_get(int *clause)
 {
 	int i = 0;
 	
@@ -102,7 +102,7 @@ int fpga_rm_cir_read_get(int *clause)
 	return 0;
 }
 
-int fpga_rm_cir_read_inf(int clause, unsigned char *slot, unsigned short *addr, unsigned int *size)
+int fpga_read_remote_inf(int clause, unsigned char *slot, unsigned int *addr, unsigned int *size)
 {
 	if((clause < 0)||(clause >= FPGA_CR_CLAU))
 		return -1;
@@ -113,9 +113,9 @@ int fpga_rm_cir_read_inf(int clause, unsigned char *slot, unsigned short *addr, 
 
 	return 0;
 }
-int fpga_rm_cir_en(int clause)
+int fpga_read_remote_en(int clause)
 {
-	int en_addr, en_bit;
+	unsigned int en_addr, en_bit;
 	unsigned int data, delay_count = 1000;
 
 	if(clause > FPGA_CR_CLAU)
@@ -141,9 +141,9 @@ int fpga_rm_cir_en(int clause)
  *size: 0 ~ 7
  *
  */
-int fpga_rm_cir_en_blk(unsigned short *enbuf, unsigned int size)
+int fpga_read_remote_block_en(unsigned short *enbuf, unsigned int size)
 {
-	int en_addr, i = 0;
+	unsigned int en_addr, i = 0;
 	unsigned int data, delay_count = 1000;
 
 	if((NULL == enbuf)||(size >=8))
@@ -171,12 +171,12 @@ int fpga_rm_cir_en_blk(unsigned short *enbuf, unsigned int size)
  *   mode: 0, check status, default
  *         1, do not check
  */
-int fpga_rm_cir_read(int clause, unsigned char slot, unsigned short addr, unsigned short *pbuf, unsigned int size)
+int fpga_read_remote(int clause, unsigned char slot, unsigned int addr, unsigned short *pbuf, unsigned int size)
 {
 	unsigned int data[FPGA_CR_CLAU_UNIT_SIZE/2] = {0}, mode;
 	int i = 0;
 	unsigned int reg_addr;
-	int en_addr,en_bit;
+	unsigned int en_addr,en_bit;
 	unsigned int delay_count = 1000;
 	unsigned int value_en;
 

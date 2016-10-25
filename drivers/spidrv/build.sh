@@ -9,7 +9,6 @@ ppc_85xxDP-gcc spidpll.c -o spidpll -lspidrv -L ./
 ppc_85xxDP-gcc spitest-old.c -o spitest-old 
 ppc_85xxDP-gcc dpll.c -o dpll -lspidrv -L ./
 ppc_85xxDP-gcc fpga.c -o fpga -lspidrv -L ./
-ppc_85xxDP-gcc rfpga.c -o rfpga -lspidrv -L ./
 ppc_85xxDP-gcc cirfpga.c -o cirfpga -lspidrv -L ./
 
 cp spitest /tftpboot
@@ -19,7 +18,6 @@ cp fpga /tftpboot
 cp spifpga /tftpboot
 cp spidpll /tftpboot
 cp libspidrv.so /tftpboot
-cp rfpga /tftpboot
 cp cirfpga /tftpboot
 
 

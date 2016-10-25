@@ -190,7 +190,7 @@ static int mix_spi_read(struct spi_device *spi,unsigned short addr, unsigned cha
 }
 
 static unsigned char rtClause = 0;
-int fpga_spi_read(unsigned short addr, unsigned char *data, size_t count, unsigned char slot)
+int fpga_spi_read(unsigned int addr, unsigned char *data, size_t count, unsigned char slot)
 {
 	int ret = 0;
 	unsigned int len = 0;
@@ -266,7 +266,7 @@ int fpga_spi_read(unsigned short addr, unsigned char *data, size_t count, unsign
 	return 0;
 }
 
-int fpga_spi_write(unsigned short addr, unsigned char *data, size_t count, unsigned char slot)
+int fpga_spi_write(unsigned int addr, unsigned char *data, size_t count, unsigned char slot)
 {
 	int ret = 0;
 	unsigned int len = 0;
