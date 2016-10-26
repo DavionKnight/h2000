@@ -2,7 +2,7 @@
 *  COPYRIGHT NOTICE
 *  Copyright (C) 2016 HuaHuan Electronics Corporation, Inc. All rights reserved
 *
-*  Author       	:Kevin_fzs
+*  Author       	:fzs
 *  File Name        	:/home/kevin/works/projects/H20RN-2000/drivers/gpio/gpiodrv.c
 *  Create Date        	:2016/10/26 19:55
 *  Last Modified      	:2016/10/26 19:55
@@ -69,7 +69,7 @@ static inline void out_be32(volatile unsigned *addr, int val)
 }
 
 
-int gpiodrv_mmap_init()
+static int gpiodrv_mmap_init()
 {
 	if((fd_mmap = open("/dev/mem", O_RDWR | O_SYNC)) == -1) 
 	{
@@ -79,7 +79,7 @@ int gpiodrv_mmap_init()
 	return 0;
 }
 
-void gpiodrv_mmap_exit(void)
+static void gpiodrv_mmap_exit(void)
 {
 	munmap((void *)gpioBase,MAP_SIZE);
 	close(fd_mmap);
@@ -115,13 +115,39 @@ static int gpiodrv_semlock_init()
 	return 0;
 }
 
-static inline int gpio_is_valid(int number)
+static inline unsigned char gpio_is_valid(int number)
 {
 	/* only some non-negative numbers are valid */
 	return ((unsigned)number) < MPC8XXX_GPIO_PINS;
 }
 
-int gpio_direction_output(unsigned gpio, int value)
+int gpio_output(unsigned gpio, unsigned char value)
+{
+	unsigned int data = 0;
+
+	if(!gpio_is_valid(gpio))
+	{
+		printf("gpio %d is valid\n",gpio);
+		return -1;
+	}
+
+	semop(semid, &bufLock, 1);
+
+	/*set data*/
+	data = in_be32((unsigned int *)(gpioBase + GPIO_DAT));	
+
+	if (value)
+		data |= mpc8xxx_gpio2mask(gpio);
+	else
+		data &= ~mpc8xxx_gpio2mask(gpio);
+
+	out_be32((unsigned int *)(gpioBase + GPIO_DAT), data);
+
+	semop(semid, &bufUnlock, 1);
+
+	return 0;
+}
+int gpio_direction_output(unsigned gpio, unsigned char value)
 {
 	unsigned int data = 0;
 
@@ -170,7 +196,7 @@ int gpio_direction_input(unsigned gpio)
 
 }
 
-int gpio_get_value(unsigned gpio)
+unsigned char gpio_get_value(unsigned gpio)
 {
 	return (in_be32((unsigned int *)(gpioBase + GPIO_DAT)) & mpc8xxx_gpio2mask(gpio))? 1:0;
 }
@@ -195,3 +221,4 @@ void gpiodrv_exit()
 	gpiodrv_mmap_exit();
 	return ;
 }
+
