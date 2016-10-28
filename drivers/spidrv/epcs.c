@@ -1,54 +1,72 @@
-/*
-*  COPYRIGHT NOTICE
-*  Copyright (C) 2016 HuaHuan Electronics Corporation, Inc. All rights reserved
-*
-*  Author       	:Kevin_fzs
-*  File Name        	:/home/kevin/works/projects/H20RN-2000/drivers/spidrv/epcs.c
-*  Create Date        	:2016/10/26 14:39
-*  Last Modified      	:2016/10/26 14:39
-*  Description    	:
-*/
-#include "spdrv.h"
+/**********************************************
+ * @file	rfpga.c
+ * @author	zhangjj <zhangjj@bjhuahuan.com>
+ * @date	2015-08-20
+ *********************************************/
+
+#include <stdint.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <getopt.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <linux/types.h>
+#include <string.h>
+#include "spidrv.h"
 
 
-/*
- * Service routine to read status register until ready, or timeout occurs.
- * Returns non-zero if error.
- */
-static int wait_till_ready(struct w25p *flash)
+int main(int argc, char *argv[])
 {
-	int count;
-	int sr;
+	int ret = 0;
+	unsigned short addr = 0,len;
+	unsigned char data[32] = {0};
+	unsigned char slot_num = 0;
+	int i = 0;	
 
-	/* one chip guarantees max 5 msec wait here after page writes,
-	 * but potentially three seconds (!) after page erase.
-	 */
-	for (count = 0; count < MAX_READY_WAIT_COUNT; count++) {
-		if ((sr = read_sr(flash)) < 0)
-			break;
-		else if (!(sr & SR_WIP))
-			return 0;
-		msleep(10);
-		/* REVISIT sometimes sleeping would be best */
+	if(-1 == spidrv_init())
+	{
+		printf("spidrv_init error\n");
+		return 0;
 	}
 
-	return 1;
+	if (argc == 5 && argv[1][0] == 'r') {
+		sscanf(argv[2], "%hhx", &slot_num);
+		sscanf(argv[3], "%hx", &addr);
+		sscanf(argv[4], "%hd", &len);
+
+		printf("slot num %x addr 0x%04x len %d:\n", slot_num, (unsigned short)addr, len);
+		epcs_spi_read(addr, (unsigned char *)data, len);
+
+		printf("The result:\n");
+		for(i = 0; i < len; i++)
+		{	
+			printf("0x%02x ",data[i]);
+			if((i+1)%16 == 0)
+				printf("\n");
+		}
+		printf("\n");
+	}
+	else if (argc == 5 && argv[1][0] == 'w') {
+		unsigned short data;
+		sscanf(argv[2], "%hhx", &slot_num);
+		sscanf(argv[3], "%hx", &addr);
+		sscanf(argv[4], "%hx", &data);
+		printf("slot num %x,write addr 0x%x data 0x%04x\n", slot_num, addr, data);
+		epcs_spi_write(addr, (unsigned char *)&data, sizeof(data)); 
+	}
+	else
+	{
+		printf("\nepcs read <slot:hex> <addr:hex> <len:dec>\n");
+		printf("epcs write <slot:hex> <addr:hex> <data:hex>\n\n");
+		printf("demo:	epcs read 0x0 0x0 2\n");
+		printf("	epcs write 0x0 0x85 0xee\n");
+	}
+	
+	spidrv_exit();
+
+	return 0;	
 }
 
-int epcs_erase_chip()
-{
 
-}
-
-int epcs_erase_sector()
-{
-}
-
-int epcs_read()
-{
-}
-
-int epcs_write()
-{
-}
 

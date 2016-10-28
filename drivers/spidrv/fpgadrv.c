@@ -1,5 +1,5 @@
 /**********************************************************
-* file name: pxm_drv_fpga_remote.c
+* file name: fpgadrv.c
 * Copyright: 
 	 Copyright 2016 huahuan.
 * author: 
@@ -18,7 +18,148 @@
 #include <unistd.h>
 #include <string.h>
 
+#include "spi.h"
 #include "spidrv.h"
+#include "spidrv_common.h"
+
+extern struct spi_device spidev;
+extern struct sembuf spidrv_sembufLock, spidrv_sembufUnlock;
+extern int spidrv_semid;
+
+static unsigned char rtClause = 0;
+int fpga_spi_read(unsigned int addr, unsigned char *data, size_t count, unsigned char slot)
+{
+	int ret = 0;
+	unsigned int len = 0;
+	unsigned short address = 0;
+
+/*        if((count > FPGA_CR_CLAU_UNIT_SIZE))
+        {
+                printf("Read length should be less than 32 count=%d\n",count);
+                return ERR_FPGA_DRV_ARGV;
+        }*/
+	if(!data)
+		return -1;
+
+	semop(spidrv_semid, &spidrv_sembufLock, 1);
+
+	spidev.max_speed_hz = 6500000;//the real rate 6.25M
+	spidev.chip_select = CHIPSELECT_FPGA;
+	spidev.mode = SPI_MODE_3;
+	spidev.bits_per_word = 8;  /*need verify*/
+
+	spi_setup(&spidev);
+
+	if((slot == 0x10) || (slot == 0x11)) /*read local fpga*/
+	{
+		mix_spi_read(&spidev, (unsigned short)addr, data, count);
+	}
+	else if(slot <= 0xf) /*remote board fpga*/
+	{
+		unsigned int rdata[FPGA_RT_CLAU_UNIT_SIZE/2] = {0};
+		unsigned int reg_addr;
+		unsigned char data_set[4] = {0};
+		unsigned int data_rw = 0,bufaddr = 0, clause = 0;
+		unsigned int value_en;
+		unsigned short read_reg;
+		unsigned int delay_count = 1000;
+		unsigned short *pbuf = (unsigned short *)data;
+		unsigned int i = 0;
+
+		clause = rtClause++;
+		if(rtClause >= FPGA_RT_CLAU)
+			rtClause = 0;
+
+//		printf("clause = %d,unitboard slot = 0x%x, addr = 0x%02x\n", clause, slot,addr);
+		bufaddr = FPGA_RT_CMD_BUFF_ADDR + clause*FPGA_RT_CLAU_UNIT_SIZE;
+		read_reg = FPGA_RT_CLAU_ADDR + clause;
+
+		data_set[0] = ((slot & 0x0f) << 4) | ((addr & 0xf00) >> 8);
+		data_set[1] = addr & 0xff;
+		data_set[2] = (0x5 << 5) | ((bufaddr&0x1f00) >> 8);
+		data_set[3] = ((bufaddr&0xe0)|(0x1f));
+
+		memcpy(&data_rw,data_set,sizeof(data_rw));
+
+		mix_spi_write(&spidev, (unsigned short)read_reg,(unsigned char *)&data_rw, sizeof(data_rw));
+
+		do{
+			mix_spi_read(&spidev, (unsigned short)FPGA_RT_RD_OVER_FLGA, (unsigned char *)&value_en, sizeof(value_en));
+			if((value_en == 0)||(delay_count<1))
+				break;
+		}while(delay_count--);
+
+		reg_addr = FPGA_RT_BUFF_ADDR + clause * FPGA_RT_CLAU_UNIT_SIZE/2;
+
+		mix_spi_read(&spidev, (unsigned short)reg_addr, (unsigned char *)rdata, sizeof(rdata));
+		for(i = 0; i < count/2; i++)
+			pbuf[i] = i%2?((rdata[i/2]>>16)&0xffff):(rdata[i/2]&0xffff);	
+	}
+	else
+	{
+		printf("fpga_spi_read slot %d error\n", slot);
+		ret = -1;
+	}
+
+	semop(spidrv_semid, &spidrv_sembufUnlock, 1);
+
+	return ret;
+}
+
+int fpga_spi_write(unsigned int addr, unsigned char *data, size_t count, unsigned char slot)
+{
+	int ret = 0;
+	unsigned int len = 0;
+	unsigned short address = 0;
+
+	if(!data)
+		return -1;
+
+	semop(spidrv_semid, &spidrv_sembufLock, 1);
+	
+	spidev.max_speed_hz = 6500000;//the real rate 6.25M
+	spidev.chip_select = CHIPSELECT_FPGA;
+	spidev.mode = SPI_MODE_3;
+	spidev.bits_per_word = 8;  /*need verify*/
+
+	spi_setup(&spidev);
+
+	if((slot == 0x10) || (slot == 0x11)) /*read local fpga*/
+	{
+		mix_spi_write(&spidev, (unsigned short)addr, data, count);
+	}
+	else if(slot <= 0xf) /*remote board fpga*/
+	{
+		unsigned char wdata[8] = {0};
+		unsigned short *ptr = (unsigned short *)data;
+		unsigned int wrdata=0;
+
+
+		for(ptr; ptr < (unsigned short *)(data + count); ptr++)
+		{
+			wdata[0] = ((slot & 0x0f) << 4) | ((addr & 0xf00) >> 8);
+			wdata[1] = addr & 0xff;
+			wdata[2] = (*ptr & 0xff00) >> 8;
+			wdata[3] = *ptr & 0xff;
+			memcpy(&wrdata, wdata,sizeof(wrdata));
+			mix_spi_write(&spidev, FPGA_RT_WR_ADDR, (unsigned char *)&wrdata, sizeof(wrdata));
+			usleep(10);
+			addr ++;
+		}
+
+	}
+	else
+	{
+		printf("fpga_spi_write slot %d error\n", slot);
+		ret = -1;
+	}
+
+	semop(spidrv_semid, &spidrv_sembufUnlock, 1);
+
+	return ret;
+}
+
+
 
 #pragma pack(1) 
 typedef struct s_fpga_rm_argv
@@ -148,7 +289,7 @@ int fpga_read_remote_block_en(unsigned short *enbuf, unsigned int size)
 
 	if((NULL == enbuf)||(size >=8))
 	{
-		return ERR_FPGA_DRV_ARGV;
+		return -1;
 	}
 	for(i = 0; i <size; i++)
 	{
@@ -181,13 +322,13 @@ int fpga_read_remote(int clause, unsigned char slot, unsigned int addr, unsigned
 	unsigned int value_en;
 
 	if((clause < 0)||(clause >= FPGA_CR_CLAU))
-		return ERR_FPGA_DRV_ARGV;
+		return -1;
 	if(!pbuf)
-		return ERR_FPGA_DRV_ARGV;
+		return -1;
 	if((clausCrMap[clause].slot != slot) ||(clausCrMap[clause].addr != addr) || (clausCrMap[clause].size != size))
 	{
 		printf("fpga_rm_cir_read para is not confirm with configure\n");
-		return ERR_FPGA_DRV_ARGV;
+		return -1;
 	}
 
 	en_addr = FPGA_CR_EN_ADDR + clause/16;
@@ -201,11 +342,9 @@ int fpga_read_remote(int clause, unsigned char slot, unsigned int addr, unsigned
 
 	reg_addr = FPGA_CR_BUFF_ADDR + clause * FPGA_CR_CLAU_UNIT_SIZE/2;
 
-	//	pthread_mutex_lock(&mutex_cir);
 	fpga_spi_read(reg_addr, (unsigned char *)data, sizeof(data), 0x10);
 	for(i = 0; i < size; i++)
 		pbuf[i] = i%2?((data[i/2]>>16)&0xffff):(data[i/2]&0xffff);
-	//	pthread_mutex_unlock(&mutex_cir);
 
 	return 0;
 

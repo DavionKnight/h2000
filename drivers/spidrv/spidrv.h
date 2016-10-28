@@ -2,39 +2,12 @@
 *  COPYRIGHT NOTICE
 *  Copyright (C) 2016 HuaHuan Electronics Corporation, Inc. All rights reserved
 *
-*  Author       	:Kevin_fzs
+*  Author       	:fzs
 *  File Name        	:/home/kevin/works/projects/H20PN-2000/drivers/spidrv/spidrv.h
 *  Create Date        	:2016/09/26 04:26
 *  Last Modified      	:
 *  Description    	:
 */
-
-#define		ERR_NONE		 		 0
-
-#define		ERR_FPGA_DRV_OPEN		-1
-#define		ERR_FPGA_DRV_RDWR		-2
-#define		ERR_FPGA_DRV_TIMEOUT	-3
-#define		ERR_FPGA_DRV_LOCK		-4
-#define		ERR_FPGA_DRV_ARGV		-5
-
-#define	FPGA_RT_CLAU_ADDR		(0x2020)
-#define	FPGA_RT_BUFF_ADDR		(0x2200)
-#define	FPGA_RT_CMD_BUFF_ADDR	(0x0400)
-#define	FPGA_RT_CLAU_UNIT_SIZE	(0x0020)
-#define FPGA_RT_RD_OVER_FLGA	(0x2002)
-
-#define FPGA_RT_WR_ADDR			(0x2010)
-
-//#define	FPGA_CR_CLAU_ADDR		(0x2020)
-#define	FPGA_CR_CLAU_ADDR		(0x2100)
-#define	FPGA_CR_BUFF_ADDR		(0x2400)
-#define	FPGA_CR_CMD_BUFF_ADDR	(0x0800)
-#define	FPGA_CR_CLAU_UNIT_SIZE	(0x0020)
-#define FPGA_CR_EN_ADDR			(0x2040)
-
-#define FPGA_RT_CLAU			32
-#define FPGA_CR_CLAU			128
-#define FPGA_CLAUSE_NUM			168
 
 /*
 用户态spi初始化，必须首先调用
@@ -152,6 +125,17 @@ int fpga_read_remote_block_en(unsigned short *enbuf, unsigned int size);
 	0  获取成功
 */
 int fpga_read_remote(int clause, unsigned char slot, unsigned int addr, unsigned short *pbuf, unsigned int size);
+
+
+
+int epcs_erase_chip();
+int epcs_erase_sector(unsigned int offset);
+int epcs_spi_read(unsigned int addr, unsigned char *data, size_t count);
+int epcs_spi_write(unsigned short addr, unsigned char *data, size_t count);
+
+
+
+
 
 
 
