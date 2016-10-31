@@ -51,7 +51,7 @@ int dpll_spi_read(unsigned short addr, unsigned char *data, size_t count)
 			
 		for(i = 0; i < loop; i++)
 		{	
-		 	if (mix_spi_read(&spidev, (unsigned short)(addr + 2 * i), data + 2 *i, 2) < 0) {
+		 	if (spidrv_mix_read(&spidev, (unsigned short)(addr + 2 * i), data + 2 *i, 2) < 0) {
 				printf("dpll spi read failed.\n");
 				ret = -1;
 			}
@@ -77,7 +77,7 @@ int dpll_spi_write(unsigned short addr, unsigned char *data, size_t count)
 
 	spi_setup(&spidev);
 
-	if(mix_spi_write(&spidev, (unsigned short)addr, data, count) < 0)
+	if(spidrv_mix_write(&spidev, (unsigned short)addr, data, count) < 0)
 	{
 		printf("dpll spi write failed.\n");
 		ret = -1;

@@ -35,7 +35,7 @@ int spidrv_semid;
 #define MULTI_REG_LEN_MAX		512
 #define FLASH_PAGESIZE		256
 
-int epcs_spi_opt(struct spi_device *spi, int opcode, unsigned int addr, unsigned char *data, unsigned int count)
+int spidrv_epcs_opt(struct spi_device *spi, int opcode, unsigned int addr, unsigned char *data, unsigned int count)
 {
 	unsigned char rxbuf[MULTI_REG_LEN_MAX] = {0};
 	unsigned char txbuf[MULTI_REG_LEN_MAX + 2] = {0};
@@ -117,7 +117,7 @@ int epcs_spi_opt(struct spi_device *spi, int opcode, unsigned int addr, unsigned
 	return 0;
 }
 
-int mix_spi_write(struct spi_device *spi,unsigned short addr, unsigned char *data, size_t count)
+int spidrv_mix_write(struct spi_device *spi,unsigned short addr, unsigned char *data, size_t count)
 {
 	int ret = 0;
 	unsigned int len = 0;
@@ -180,7 +180,7 @@ int mix_spi_write(struct spi_device *spi,unsigned short addr, unsigned char *dat
 
 	return 0;
 }
-int mix_spi_read(struct spi_device *spi,unsigned short addr, unsigned char *data, size_t count)
+int spidrv_mix_read(struct spi_device *spi,unsigned short addr, unsigned char *data, size_t count)
 {
 	int ret = 0;
 	int len = 0;

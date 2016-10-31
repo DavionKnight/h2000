@@ -32,7 +32,7 @@ extern int spidrv_semid;
 
 #define	MAX_READY_WAIT_COUNT	100000
 
-static int wait_till_ready(struct spi_device *spidev)
+static int epcs_wait_ready(struct spi_device *spidev)
 {
 	int count;
 	unsigned char sr = 0;
@@ -41,7 +41,7 @@ static int wait_till_ready(struct spi_device *spidev)
 	 * but potentially three seconds (!) after page erase.
 	 */
 	for (count = 0; count < MAX_READY_WAIT_COUNT; count++) {
-		if (epcs_spi_opt(spidev, OPCODE_RDSR, 0, &sr, 0) < 0)
+		if (spidrv_epcs_opt(spidev, OPCODE_RDSR, 0, &sr, 0) < 0)
 			break;
 		else if (!(sr & SR_WIP))
 			return 0;
@@ -53,11 +53,11 @@ static int wait_till_ready(struct spi_device *spidev)
 	return 1;
 }
 
-static int write_enable(struct spi_device *spidev)
+static int epcs_write_enable(struct spi_device *spidev)
 {
 	unsigned char data;
 
-	return epcs_spi_opt(spidev, OPCODE_WREN, 0, &data, 0);
+	return spidrv_epcs_opt(spidev, OPCODE_WREN, 0, &data, 0);
 }
 
 int epcs_erase_chip()
@@ -76,16 +76,16 @@ int epcs_erase_chip()
 	spi_setup(&spidev);
 
 	/* Wait until finished previous write command. */
-	if (wait_till_ready(&spidev))
+	if (epcs_wait_ready(&spidev))
 	{
 		ret = -1;
 		goto END;
 	}
 	
 	/* Send write enable, then erase commands. */
-	write_enable(&spidev);
+	epcs_write_enable(&spidev);
 
-	epcs_spi_opt(&spidev, OPCODE_CHIP_ERASE, 0, &data, 0);
+	spidrv_epcs_opt(&spidev, OPCODE_CHIP_ERASE, 0, &data, 0);
 
 END:
 	gpio_direction_output(12, 1);
@@ -110,16 +110,16 @@ int epcs_erase_sector(unsigned int offset)
 	spi_setup(&spidev);
 	/* Wait until finished previous write command. */
 
-	if (wait_till_ready(&spidev))
+	if (epcs_wait_ready(&spidev))
 	{
 		ret = -1;
 		goto END;
 	}
 
 	/* Send write enable, then erase commands. */
-	write_enable(&spidev);
+	epcs_write_enable(&spidev);
 
-	epcs_spi_opt(&spidev, OPCODE_ERASE_SECTOR, offset, &data, 0);
+	spidrv_epcs_opt(&spidev, OPCODE_ERASE_SECTOR, offset, &data, 0);
 
 END:
 	gpio_direction_output(12, 1);
@@ -147,13 +147,13 @@ int epcs_spi_read(unsigned int addr, unsigned char *data, size_t count)
 
 	spi_setup(&spidev);
 
-	if (wait_till_ready(&spidev))
+	if (epcs_wait_ready(&spidev))
 	{
 		ret = -1;
 		goto END;
 	}
 
-	if (epcs_spi_opt(&spidev, OPCODE_READ, addr, data, count) < 0) 
+	if (spidrv_epcs_opt(&spidev, OPCODE_READ, addr, data, count) < 0) 
 	{
 		printf("epcs_spi_read failed.\n");
 		ret = -1;
@@ -186,16 +186,16 @@ int epcs_spi_write(unsigned short addr, unsigned char *data, size_t count)
 
 	spi_setup(&spidev);
 
-	if (wait_till_ready(&spidev))
+	if (epcs_wait_ready(&spidev))
 	{
 		ret = -1;
 		goto END;
 	}
 
 	/* Send write enable, then erase commands. */
-	write_enable(&spidev);
+	epcs_write_enable(&spidev);
 
-	if(epcs_spi_opt(&spidev, OPCODE_WRITE, addr, data, count)< 0)
+	if(spidrv_epcs_opt(&spidev, OPCODE_WRITE, addr, data, count)< 0)
 	{
 		printf("epcs_spi_write failed.\n");
 		ret = -1;

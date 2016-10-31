@@ -56,7 +56,7 @@ int spi_transfer(struct spi_device *spidev, unsigned char *txbuf, unsigned char 
 {
 	unsigned int txword = 0, rxword	 = 0;
 	unsigned int event = 0, command = 0;
-	int isRead = 0, tm = 0, i = 0;
+	int isRead = 0, tm = 0, i = 0, ret = 0;
 
 	command = (spidev->chip_select<<30)|(len - 1);
 	/*enable chipselect and tell spi the length of data*/
@@ -114,6 +114,8 @@ usleep(1);
 
 			spi_reg_write(&spidev->spi_reg->transmit, txword);
 		}
+		else
+			continue;
 		/*here wait tx data over*/
 //		usleep(5);
 //		printf("txword=0x%08x, len=%d\n",txword, len);
@@ -142,22 +144,25 @@ usleep(1);
 			 * the device.  Arbitrary delays suck, though...
 			 */
 			if (isRead)
+			{
+				len -= 4;
 				break;
+			}
 		}
-		len -= 4;
+		if (tm >= SPI_TIMEOUT)
+		{
+			printf("spi error:Time out when spi transfer\n");
+			ret = -1;
+			break;
+		}
 	}while(len>0);
-	if (tm >= SPI_TIMEOUT)
-	{
-		printf("spi error:Time out when spi transfer\n");
-		return -1;
-	}
 #endif
 
 	/*disable rx ints*/
 	spi_reg_write(&spidev->spi_reg->mask, 0);
 //	spi_cs_invalid(spidev->chip_select);
 
-	return 0;
+	return ret;
 	
 }
 

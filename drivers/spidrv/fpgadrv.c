@@ -52,7 +52,7 @@ int fpga_spi_read(unsigned int addr, unsigned char *data, size_t count, unsigned
 
 	if((slot == 0x10) || (slot == 0x11)) /*read local fpga*/
 	{
-		mix_spi_read(&spidev, (unsigned short)addr, data, count);
+		spidrv_mix_read(&spidev, (unsigned short)addr, data, count);
 	}
 	else if(slot <= 0xf) /*remote board fpga*/
 	{
@@ -81,17 +81,17 @@ int fpga_spi_read(unsigned int addr, unsigned char *data, size_t count, unsigned
 
 		memcpy(&data_rw,data_set,sizeof(data_rw));
 
-		mix_spi_write(&spidev, (unsigned short)read_reg,(unsigned char *)&data_rw, sizeof(data_rw));
+		spidrv_mix_write(&spidev, (unsigned short)read_reg,(unsigned char *)&data_rw, sizeof(data_rw));
 
 		do{
-			mix_spi_read(&spidev, (unsigned short)FPGA_RT_RD_OVER_FLGA, (unsigned char *)&value_en, sizeof(value_en));
+			spidrv_mix_read(&spidev, (unsigned short)FPGA_RT_RD_OVER_FLGA, (unsigned char *)&value_en, sizeof(value_en));
 			if((value_en == 0)||(delay_count<1))
 				break;
 		}while(delay_count--);
 
 		reg_addr = FPGA_RT_BUFF_ADDR + clause * FPGA_RT_CLAU_UNIT_SIZE/2;
 
-		mix_spi_read(&spidev, (unsigned short)reg_addr, (unsigned char *)rdata, sizeof(rdata));
+		spidrv_mix_read(&spidev, (unsigned short)reg_addr, (unsigned char *)rdata, sizeof(rdata));
 		for(i = 0; i < count/2; i++)
 			pbuf[i] = i%2?((rdata[i/2]>>16)&0xffff):(rdata[i/2]&0xffff);	
 	}
@@ -126,7 +126,7 @@ int fpga_spi_write(unsigned int addr, unsigned char *data, size_t count, unsigne
 
 	if((slot == 0x10) || (slot == 0x11)) /*read local fpga*/
 	{
-		mix_spi_write(&spidev, (unsigned short)addr, data, count);
+		spidrv_mix_write(&spidev, (unsigned short)addr, data, count);
 	}
 	else if(slot <= 0xf) /*remote board fpga*/
 	{
@@ -142,7 +142,7 @@ int fpga_spi_write(unsigned int addr, unsigned char *data, size_t count, unsigne
 			wdata[2] = (*ptr & 0xff00) >> 8;
 			wdata[3] = *ptr & 0xff;
 			memcpy(&wrdata, wdata,sizeof(wrdata));
-			mix_spi_write(&spidev, FPGA_RT_WR_ADDR, (unsigned char *)&wrdata, sizeof(wrdata));
+			spidrv_mix_write(&spidev, FPGA_RT_WR_ADDR, (unsigned char *)&wrdata, sizeof(wrdata));
 			usleep(10);
 			addr ++;
 		}
