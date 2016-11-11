@@ -27,7 +27,7 @@ extern struct sembuf spidrv_sembufLock, spidrv_sembufUnlock;
 extern int spidrv_semid;
 
 static unsigned char rtClause = 0;
-int fpga_spi_read(unsigned int addr, unsigned char *data, size_t count, unsigned char slot)
+int fpga_spi_read(unsigned int addr, unsigned char *data, size_t count, unsigned char slot, unsigned char type)
 {
 	int ret = 0;
 	unsigned int len = 0;
@@ -40,6 +40,10 @@ int fpga_spi_read(unsigned int addr, unsigned char *data, size_t count, unsigned
         }*/
 	if(!data)
 		return -1;
+	if(slot > 0xf)
+		return -1;
+	if((type > 0x1) && (type < 0x0))
+		return -1;
 
 	semop(spidrv_semid, &spidrv_sembufLock, 1);
 
@@ -50,11 +54,11 @@ int fpga_spi_read(unsigned int addr, unsigned char *data, size_t count, unsigned
 
 	spi_setup(&spidev);
 
-	if((slot == 0x10) || (slot == 0x11)) /*read local fpga*/
+	if(0 == type) /*read local fpga*/
 	{
 		spidrv_mix_read(&spidev, (unsigned short)addr, data, count);
 	}
-	else if(slot <= 0xf) /*remote board fpga*/
+	else if(1 == type) /*remote board fpga*/
 	{
 		unsigned int rdata[FPGA_RT_CLAU_UNIT_SIZE/2] = {0};
 		unsigned int reg_addr;
@@ -106,13 +110,17 @@ int fpga_spi_read(unsigned int addr, unsigned char *data, size_t count, unsigned
 	return ret;
 }
 
-int fpga_spi_write(unsigned int addr, unsigned char *data, size_t count, unsigned char slot)
+int fpga_spi_write(unsigned int addr, unsigned char *data, size_t count, unsigned char slot, unsigned char type)
 {
 	int ret = 0;
 	unsigned int len = 0;
 	unsigned short address = 0;
 
 	if(!data)
+		return -1;
+	if(slot > 0xf)
+		return -1;
+	if((type > 0x1) && (type < 0x0))
 		return -1;
 
 	semop(spidrv_semid, &spidrv_sembufLock, 1);
@@ -124,11 +132,11 @@ int fpga_spi_write(unsigned int addr, unsigned char *data, size_t count, unsigne
 
 	spi_setup(&spidev);
 
-	if((slot == 0x10) || (slot == 0x11)) /*read local fpga*/
+	if(0 == type) /*read local fpga*/
 	{
 		spidrv_mix_write(&spidev, (unsigned short)addr, data, count);
 	}
-	else if(slot <= 0xf) /*remote board fpga*/
+	else if(type == 1) /*remote board fpga*/
 	{
 		unsigned char wdata[8] = {0};
 		unsigned short *ptr = (unsigned short *)data;
