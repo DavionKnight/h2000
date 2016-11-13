@@ -1,0 +1,344 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+BCMDBG_ERR	spi.h	190;"	d
+BLOCK_SIZE	epcs.c	12;"	d	file:
+CC_SERIAL_IO_SPI0_MASK	spi.h	158;"	d
+CC_SERIAL_IO_SPI1_MASK	spi.h	159;"	d
+CC_SERIAL_IO_SPI2_MASK	spi.h	160;"	d
+CC_SERIAL_IO_SPI_INTR_MASK	spi.h	157;"	d
+CC_SPICFG_MASK	spi.h	143;"	d
+CC_SPIFIFOIO_MASK	spi.h	146;"	d
+CC_SPIMCTRL_ACKEN	spi.h	133;"	d
+CC_SPIMCTRL_ACKEN_MASK	spi.h	132;"	d
+CC_SPIMCTRL_BE	spi.h	135;"	d
+CC_SPIMCTRL_CLK_MASK	spi.h	140;"	d
+CC_SPIMCTRL_ENDIAN_MASK	spi.h	134;"	d
+CC_SPIMCTRL_LE	spi.h	136;"	d
+CC_SPIMCTRL_LSB_FIRST	spi.h	138;"	d
+CC_SPIMCTRL_LSB_MASK	spi.h	137;"	d
+CC_SPIMCTRL_MODE_0	spi.h	128;"	d
+CC_SPIMCTRL_MODE_1	spi.h	129;"	d
+CC_SPIMCTRL_MODE_2	spi.h	130;"	d
+CC_SPIMCTRL_MODE_3	spi.h	131;"	d
+CC_SPIMCTRL_MODE_MASK	spi.h	127;"	d
+CC_SPIMCTRL_MSB_FIRST	spi.h	139;"	d
+CC_SPISTS_FIFOE	spi.h	153;"	d
+CC_SPISTS_FIFOF	spi.h	154;"	d
+CC_SPISTS_INTFLAG	spi.h	152;"	d
+CC_SPISTS_MASK	spi.h	149;"	d
+CC_SPISTS_RDONE	spi.h	151;"	d
+CC_SPISTS_READY	spi.h	150;"	d
+CC_SPI_ID_IS_VALID	spi.h	122;"	d
+CC_SPI_MODE_CPOL_0_CPHA_0	spi.h	/^    CC_SPI_MODE_CPOL_0_CPHA_0 = 0,$/;"	e	enum:cc_spi_mode_e
+CC_SPI_MODE_CPOL_0_CPHA_1	spi.h	/^    CC_SPI_MODE_CPOL_0_CPHA_1,$/;"	e	enum:cc_spi_mode_e
+CC_SPI_MODE_CPOL_1_CPHA_0	spi.h	/^    CC_SPI_MODE_CPOL_1_CPHA_0,$/;"	e	enum:cc_spi_mode_e
+CC_SPI_MODE_CPOL_1_CPHA_1	spi.h	/^    CC_SPI_MODE_CPOL_1_CPHA_1,$/;"	e	enum:cc_spi_mode_e
+CC_SPI_MODE_IS_VALID	spi.h	124;"	d
+CC_SPI_NUM_DEV	spi.h	/^    CC_SPI_NUM_DEV$/;"	e	enum:cc_spi_id_e
+CC_SPI_NUM_MODE	spi.h	/^    CC_SPI_NUM_MODE$/;"	e	enum:cc_spi_mode_e
+CC_SPI_SS0	spi.h	/^    CC_SPI_SS0 = 0,$/;"	e	enum:cc_spi_id_e
+CC_SPI_SS1	spi.h	/^    CC_SPI_SS1,$/;"	e	enum:cc_spi_id_e
+CC_SPI_SS2	spi.h	/^    CC_SPI_SS2,$/;"	e	enum:cc_spi_id_e
+CHIPSELECT_DPLL	spidrv.h	17;"	d
+CHIPSELECT_FPGA	spidrv.h	16;"	d
+CHIPSELECT_FPGA_FLASH	spidrv.h	18;"	d
+CMD_SIZE	fpgadrv.c	361;"	d	file:
+CSMODE_CI_INACTIVEHIGH	spi.c	434;"	d	file:
+CSMODE_CI_INACTIVEHIGH	spi.c	558;"	d	file:
+CSMODE_CP_BEGIN_EDGECLK	spi.c	435;"	d	file:
+CSMODE_DIV16	spi.c	437;"	d	file:
+CSMODE_INIT_VAL	spi.c	563;"	d	file:
+CSMODE_LEN	spi.c	440;"	d	file:
+CSMODE_PM	spi.c	438;"	d	file:
+CSMODE_PM_MAX	spi.c	457;"	d	file:
+CSMODE_PM_MIN	spi.c	458;"	d	file:
+CSMODE_POL_1	spi.c	439;"	d	file:
+CSMODE_POL_1	spi.c	554;"	d	file:
+CSMODE_REV	spi.c	436;"	d	file:
+CS_AFT	spi.c	556;"	d	file:
+CS_BEF	spi.c	555;"	d	file:
+CS_CG	spi.c	557;"	d	file:
+DS31400_CHIP	spi.h	169;"	d
+DS31400_REG_ADDR_MAX	spi.h	172;"	d
+E1_CHIP	spi.h	170;"	d
+ERROR	spi.h	179;"	d
+FLASH_PAGESIZE	fpgadrv.c	290;"	d	file:
+FPGA_CLAUSE_NUM	fpgadrv.c	44;"	d	file:
+FPGA_CR_BUFF_ADDR	fpgadrv.c	37;"	d	file:
+FPGA_CR_CLAU	fpgadrv.c	43;"	d	file:
+FPGA_CR_CLAU_ADDR	fpgadrv.c	36;"	d	file:
+FPGA_CR_CLAU_UNIT_SIZE	fpgadrv.c	39;"	d	file:
+FPGA_CR_CMD_BUFF_ADDR	fpgadrv.c	38;"	d	file:
+FPGA_CR_EN_ADDR	fpgadrv.c	40;"	d	file:
+FPGA_DATA_VALID	spi.h	261;"	d
+FPGA_DEV_SLAVE_ADD	spi.h	259;"	d
+FPGA_READ_DATA	spi.h	260;"	d
+FPGA_READ_ENABLE	spi.h	258;"	d
+FPGA_REG_ADDR_MAX	spi.h	55;"	d
+FPGA_RT_BUFF_ADDR	fpgadrv.c	29;"	d	file:
+FPGA_RT_CLAU	fpgadrv.c	42;"	d	file:
+FPGA_RT_CLAU_ADDR	fpgadrv.c	28;"	d	file:
+FPGA_RT_CLAU_UNIT_SIZE	fpgadrv.c	31;"	d	file:
+FPGA_RT_CMD_BUFF_ADDR	fpgadrv.c	30;"	d	file:
+FPGA_RT_RD_OVER_FLGA	fpgadrv.c	32;"	d	file:
+FPGA_RT_WR_ADDR	fpgadrv.c	34;"	d	file:
+GPIO_BASE	gpiodrv.c	30;"	d	file:
+GPIO_DAT	gpiodrv.c	25;"	d	file:
+GPIO_DIR	gpiodrv.c	23;"	d	file:
+GPIO_ICR	gpiodrv.c	28;"	d	file:
+GPIO_IER	gpiodrv.c	26;"	d	file:
+GPIO_IMR	gpiodrv.c	27;"	d	file:
+GPIO_ODR	gpiodrv.c	24;"	d	file:
+GPIO_RECONFIG	fpgadrv.c	21;"	d	file:
+GPIO_RECONFIG	fpgadrv.c	26;"	d	file:
+MAP_MASK	gpiodrv.c	32;"	d	file:
+MAP_MASK	spidrv.c	20;"	d	file:
+MAP_SIZE	gpiodrv.c	31;"	d	file:
+MAP_SIZE	spidrv.c	19;"	d	file:
+MAX_READY_WAIT_COUNT	fpgadrv.c	356;"	d	file:
+MODEBITS	spi.h	97;"	d
+MPC8XXX_GPIO_PINS	gpiodrv.c	21;"	d	file:
+MTD_SIZE	fpgadrv.c	360;"	d	file:
+MULTI_REG_LEN_MAX	spidrv.h	20;"	d
+OPCODE_BE_32K	fpgadrv.c	300;"	d	file:
+OPCODE_BE_4K	fpgadrv.c	299;"	d	file:
+OPCODE_CHIP_ERASE	fpgadrv.c	301;"	d	file:
+OPCODE_FAST_READ	fpgadrv.c	297;"	d	file:
+OPCODE_NORM_READ	fpgadrv.c	296;"	d	file:
+OPCODE_PP	fpgadrv.c	298;"	d	file:
+OPCODE_RDID	fpgadrv.c	303;"	d	file:
+OPCODE_RDSR	fpgadrv.c	294;"	d	file:
+OPCODE_READ	fpgadrv.c	305;"	d	file:
+OPCODE_SE	fpgadrv.c	302;"	d	file:
+OPCODE_WREN	fpgadrv.c	293;"	d	file:
+OPCODE_WRSR	fpgadrv.c	295;"	d	file:
+SERIAL_IO_INTMASK	spi.h	187;"	d
+SERIAL_IO_SEL	spi.h	188;"	d
+SPIMODE_RXTHR	spi.c	550;"	d	file:
+SPIMODE_TXTHR	spi.c	549;"	d	file:
+SPIM_NE	spi.c	444;"	d	file:
+SPIM_NF	spi.c	445;"	d	file:
+SPI_3WIRE	spi.h	47;"	d
+SPI_CCD_MAX	spi.h	220;"	d
+SPI_CONFIG	spi.h	184;"	d
+SPI_CPHA	spi.h	39;"	d
+SPI_CPOL	spi.h	40;"	d
+SPI_CS_HIGH	spi.h	45;"	d
+SPI_ERROR	spi.h	192;"	d
+SPI_ERROR	spi.h	194;"	d
+SPI_ERR_INTERNAL	spi.h	225;"	d
+SPI_ERR_NONE	spi.h	223;"	d
+SPI_ERR_PARAM	spi.h	226;"	d
+SPI_ERR_TIMEOUT	spi.h	224;"	d
+SPI_ERR_UNAVAIL	spi.h	227;"	d
+SPI_ERR_UNKNOW	spi.h	228;"	d
+SPI_EV_NE	spi.c	447;"	d	file:
+SPI_EV_NF	spi.c	448;"	d	file:
+SPI_FIFO_IO	spi.h	185;"	d
+SPI_FIFO_MAX_SIZE	spi.h	205;"	d
+SPI_FPGA_RD_BURST	spi.h	52;"	d
+SPI_FPGA_RD_SINGLE	spi.h	53;"	d
+SPI_FPGA_WR_BURST	spi.h	51;"	d
+SPI_FPGA_WR_SINGLE	spi.h	50;"	d
+SPI_INTFLAG_TIMEOUT	spi.h	206;"	d
+SPI_LOOP	spi.h	48;"	d
+SPI_LSB_FIRST	spi.h	46;"	d
+SPI_MODE_0	spi.h	41;"	d
+SPI_MODE_1	spi.h	42;"	d
+SPI_MODE_2	spi.h	43;"	d
+SPI_MODE_3	spi.h	44;"	d
+SPI_MODE_CTRL	spi.h	183;"	d
+SPI_MODE_CTRL_ACKEN	spi.h	215;"	d
+SPI_MODE_CTRL_CLOCK	spi.h	217;"	d
+SPI_MODE_CTRL_ENDIAN	spi.h	216;"	d
+SPI_MODE_CTRL_LSBEN	spi.h	218;"	d
+SPI_MODE_CTRL_MODE	spi.h	214;"	d
+SPI_MODE_EN	spi.c	453;"	d	file:
+SPI_MODE_LOOP	spi.c	450;"	d	file:
+SPI_MODE_MS	spi.c	452;"	d	file:
+SPI_MODE_REV	spi.c	451;"	d	file:
+SPI_MSG	spi.h	198;"	d
+SPI_MSG	spi.h	200;"	d
+SPI_REGISTER_BASE	spi.h	182;"	d
+SPI_REGISTER_BASE	spidrv.c	390;"	d	file:
+SPI_STATES_DISABLE	spi.h	208;"	d
+SPI_STATES_ENABLE	spi.h	209;"	d
+SPI_STATES_READ	spi.h	211;"	d
+SPI_STATES_WRITE	spi.h	210;"	d
+SPI_STATUS	spi.h	186;"	d
+SPI_TIMEOUT	spi.c	455;"	d	file:
+SPMODE_ENABLE	spi.c	441;"	d	file:
+SPMODE_ENABLE	spi.c	552;"	d	file:
+SPMODE_INIT_VAL	spi.c	551;"	d	file:
+SR_BP0	spi.h	252;"	d
+SR_BP1	spi.h	253;"	d
+SR_BP2	spi.h	254;"	d
+SR_SRWD	spi.h	255;"	d
+SR_WEL	fpgadrv.c	359;"	d	file:
+SR_WIP	fpgadrv.c	358;"	d	file:
+S_SPICFG_RDC	spi.h	239;"	d
+S_SPICFG_SS	spi.h	236;"	d
+S_SPICFG_WCC	spi.h	245;"	d
+S_SPICFG_WDC	spi.h	242;"	d
+V_SPICFG_RDC	spi.h	240;"	d
+V_SPICFG_SS	spi.h	237;"	d
+V_SPICFG_START	spi.h	248;"	d
+V_SPICFG_WCC	spi.h	246;"	d
+V_SPICFG_WDC	spi.h	243;"	d
+_DD_GETVALUE	spi.h	233;"	d
+_DD_MAKEMASK	spi.h	231;"	d
+_DD_MAKEMASK1	spi.h	230;"	d
+_DD_MAKEVALUE	spi.h	232;"	d
+_DPLL_DRV_H_	dplldrv.h	13;"	d
+_FPGA_DRV_H_	fpgadrv.h	13;"	d
+_SPI_DRV_H_	spidrv.h	13;"	d
+_SPI_H_	spi.h	13;"	d
+__buf	gpiodrv.c	/^  struct seminfo *__buf;	\/* buffer for IPC_INFO *\/$/;"	m	union:semun	typeref:struct:semun::seminfo	file:
+__buf	spidrv.c	/^ struct seminfo *__buf;      $/;"	m	union:semun	typeref:struct:semun::seminfo	file:
+__old_buf	gpiodrv.c	/^  struct __old_semid_ds *__old_buf;$/;"	m	union:semun	typeref:struct:semun::__old_semid_ds	file:
+addr	fpgadrv.c	/^    unsigned int        addr;    \/\/ 0x0000~0x0FFF$/;"	m	struct:s_fpga_rm_argv	file:
+arg	spidrv.c	/^union semun arg;$/;"	v	typeref:union:semun
+array	gpiodrv.c	/^  unsigned short int *array;	\/* array for GETALL & SETALL *\/$/;"	m	union:semun	file:
+array	spi.h	/^   unsigned short* array; 	\/*SETALL、GETALL用的数组值*\/$/;"	m	union:semun
+array	spidrv.c	/^ unsigned short int *array;  $/;"	m	union:semun	file:
+bits_per_word	fpgadrv.c	/^    unsigned char       bits_per_word;$/;"	m	struct:spi_transfer_t	file:
+bits_per_word	spi.h	/^	unsigned char 		bits_per_word;$/;"	m	struct:spi_device
+buf	gpiodrv.c	/^  struct semid_ds *buf;		\/* buffer for IPC_STAT & IPC_SET *\/$/;"	m	union:semun	typeref:struct:semun::semid_ds	file:
+buf	spi.h	/^    unsigned char buf[32];        \/* Software control info *\/$/;"	m	struct:chipc_spi_softc_s
+buf	spi.h	/^   struct semid_ds* buf; 	\/*IPC_STAT、IPC_SET用的semid_ds结构*\/$/;"	m	union:semun	typeref:struct:semun::semid_ds
+buf	spidrv.c	/^ struct semid_ds *buf;        $/;"	m	union:semun	typeref:struct:semun::semid_ds	file:
+bufLock	gpiodrv.c	/^struct sembuf bufLock, bufUnlock;$/;"	v	typeref:struct:sembuf
+bufUnlock	gpiodrv.c	/^struct sembuf bufLock, bufUnlock;$/;"	v	typeref:struct:
+buf_index	spi.h	/^    unsigned int buf_index;        \/* the buffer length *\/$/;"	m	struct:chipc_spi_softc_s
+cc_spi_id_e	spi.h	/^typedef enum cc_spi_id_e {$/;"	g
+cc_spi_id_t	spi.h	/^} cc_spi_id_t;$/;"	t	typeref:enum:cc_spi_id_e
+cc_spi_mode_e	spi.h	/^typedef enum cc_spi_mode_e {$/;"	g
+cc_spi_mode_t	spi.h	/^} cc_spi_mode_t;$/;"	t	typeref:enum:cc_spi_mode_e
+chip_select	spi.h	/^	unsigned char		chip_select;$/;"	m	struct:spi_device
+chipc_spi_softc_s	spi.h	/^typedef struct chipc_spi_softc_s {$/;"	s
+chipc_spi_softc_t	spi.h	/^} chipc_spi_softc_t;$/;"	t	typeref:struct:chipc_spi_softc_s
+clausCrMap	fpgadrv.c	/^s_FPGA_RM_ARGV clausCrMap[FPGA_CR_CLAU] = {0};$/;"	v
+clrbits32	gpiodrv.c	41;"	d	file:
+command	spi.h	/^        unsigned int command;$/;"	m	struct:spi_reg_t
+csmode	spi.h	/^        unsigned int csmode[4];$/;"	m	struct:spi_reg_t
+delay_usecs	fpgadrv.c	/^    unsigned short      delay_usecs;$/;"	m	struct:spi_transfer_t	file:
+dpll_read	dplldrv.c	/^int dpll_read(unsigned short addr, unsigned char *data, size_t count)$/;"	f
+dpll_read	dplldrv.c	/^int dpll_read(unsigned short addr, unsigned char *data, size_t count,unsigned char flag)$/;"	f
+dpll_write	dplldrv.c	/^int dpll_write(unsigned short addr, unsigned char *data, size_t count)$/;"	f
+dpll_write	dplldrv.c	/^int dpll_write(unsigned short addr, unsigned char *data, size_t count,unsigned char flag)$/;"	f
+event	spi.h	/^        unsigned int event;$/;"	m	struct:spi_reg_t
+fd_mmap	gpiodrv.c	/^int fd_mmap;$/;"	v
+fd_mmap	spidrv.c	/^int fd_mmap;$/;"	v
+file_write	epcs.c	/^int file_write(int fd_pof)$/;"	f
+fpga_chip_select_addr	spi.h	168;"	d
+fpga_circle_read	fpgadrv.c	/^int fpga_circle_read ( int clause, unsigned char slot, unsigned int addr, unsigned short *pbuf, unsigned int size )$/;"	f
+fpga_circle_read_block_enable	fpgadrv.c	/^int fpga_circle_read_block_enable ( unsigned short *enbuf, unsigned int size )$/;"	f
+fpga_circle_read_enable	fpgadrv.c	/^int fpga_circle_read_enable ( int clause )$/;"	f
+fpga_circle_read_get	fpgadrv.c	/^int fpga_circle_read_get ( int *clause )$/;"	f
+fpga_circle_read_get_config	fpgadrv.c	/^int fpga_circle_read_get_config ( int clause, unsigned char *slot, unsigned int *addr, unsigned int *size )$/;"	f
+fpga_circle_read_set	fpgadrv.c	/^int fpga_circle_read_set ( int clause, unsigned char slot, unsigned int addr, unsigned int size )$/;"	f
+fpga_flash_erase	fpgadrv.c	/^int fpga_flash_erase ( void )$/;"	f
+fpga_flash_gpio_set	fpgadrv.c	/^void fpga_flash_gpio_set ( unsigned char en )$/;"	f
+fpga_flash_read	fpgadrv.c	/^int fpga_flash_read ( long from, unsigned char *buf, unsigned int len )$/;"	f
+fpga_flash_reconfig	fpgadrv.c	/^void fpga_flash_reconfig ( void )$/;"	f
+fpga_flash_status_get	fpgadrv.c	/^static int fpga_flash_status_get()$/;"	f	file:
+fpga_flash_wait_till_ready	fpgadrv.c	/^static int fpga_flash_wait_till_ready()$/;"	f	file:
+fpga_flash_write	fpgadrv.c	/^int fpga_flash_write ( long to, const unsigned char *buf, unsigned int len )$/;"	f
+fpga_flash_write_enable	fpgadrv.c	/^static int fpga_flash_write_enable()$/;"	f	file:
+fpga_local_read	fpgadrv.c	/^static int fpga_local_read ( unsigned int addr, unsigned char *data, size_t count )$/;"	f	file:
+fpga_local_write	fpgadrv.c	/^static int fpga_local_write ( unsigned int addr, unsigned char *data, size_t count )$/;"	f	file:
+fpga_read	fpgadrv.c	/^int fpga_read ( unsigned int addr, unsigned char *data, size_t count, unsigned char slot )$/;"	f
+fpga_write	fpgadrv.c	/^int fpga_write ( unsigned int addr, unsigned char *data, size_t count, unsigned char slot )$/;"	f
+gpioBase	gpiodrv.c	/^unsigned char *gpioBase = 0;$/;"	v
+gpio_direction_input	gpiodrv.c	/^int gpio_direction_input(unsigned gpio)$/;"	f
+gpio_direction_output	gpiodrv.c	/^int gpio_direction_output(unsigned gpio, unsigned char value)$/;"	f
+gpio_get_value	gpiodrv.c	/^unsigned char gpio_get_value(unsigned gpio)$/;"	f
+gpio_is_valid	gpiodrv.c	/^static inline unsigned char gpio_is_valid(int number)$/;"	f	file:
+gpio_output	gpiodrv.c	/^int gpio_output(unsigned gpio, unsigned char value)$/;"	f
+gpiodrv_exit	gpiodrv.c	/^void gpiodrv_exit()$/;"	f
+gpiodrv_init	gpiodrv.c	/^int gpiodrv_init()$/;"	f
+gpiodrv_mmap_exit	gpiodrv.c	/^static void gpiodrv_mmap_exit(void)$/;"	f	file:
+gpiodrv_mmap_init	gpiodrv.c	/^static int gpiodrv_mmap_init()$/;"	f	file:
+gpiodrv_semlock_init	gpiodrv.c	/^static int gpiodrv_semlock_init()  $/;"	f	file:
+id	spi.h	/^    unsigned int id;        \/* SPI device ID *\/$/;"	m	struct:chipc_spi_softc_s
+in_be32	gpiodrv.c	/^static inline unsigned in_be32(const volatile unsigned *addr)$/;"	f	file:
+initialized	gpiodrv.c	/^int initialized = 0;$/;"	v
+int32	spi.h	/^typedef unsigned int	int32;$/;"	t
+irq	spi.h	/^	int					irq;$/;"	m	struct:spi_device
+len	fpgadrv.c	/^    unsigned    len;$/;"	m	struct:spi_transfer_t	file:
+main	dpll.c	/^int main(int argc, char *argv[])$/;"	f
+main	epcs.c	/^int main(int argc, char *argv[])$/;"	f
+main	fpga.c	/^int main(int argc, char *argv[])$/;"	f
+mapbase	spi.c	/^void *mapbase = NULL;$/;"	v
+mask	spi.h	/^        unsigned int mask;$/;"	m	struct:spi_reg_t
+max_speed_hz	spi.h	/^	unsigned int		max_speed_hz;$/;"	m	struct:spi_device
+mips53003_spi_buf_write	spi.c	/^int mips53003_spi_buf_write(unsigned char *buf, int len)$/;"	f
+mips53003_spi_control	spi.c	/^int mips53003_spi_control(cc_spi_id_t id, uint rdc, uint wdc, uint wcc)$/;"	f
+mips53003_spi_disable	spi.c	/^int mips53003_spi_disable(cc_spi_id_t id)$/;"	f
+mips53003_spi_enable	spi.c	/^int mips53003_spi_enable(cc_spi_id_t id)$/;"	f
+mips53003_spi_interface_select	spi.c	/^int mips53003_spi_interface_select(cc_spi_id_t id, int en) $/;"	f
+mips53003_spi_mode_set	spi.c	/^int mips53003_spi_mode_set(unsigned int flags, unsigned int value)$/;"	f
+mips53003_spi_status_get	spi.c	/^unsigned int mips53003_spi_status_get(void) $/;"	f
+mips53003_spi_write	spi.c	/^mips53003_spi_write(unsigned char *data, int len, int rxlen) $/;"	f
+mips53003_spi_write_for_read	spi.c	/^int mips53003_spi_write_for_read(unsigned char *data, int len, int rxlen) $/;"	f
+mode	spi.h	/^	unsigned char		mode;$/;"	m	struct:spi_device
+mode	spi.h	/^        unsigned int mode;$/;"	m	struct:spi_reg_t
+mpc8xxx_gpio2mask	gpiodrv.c	/^static inline unsigned int  mpc8xxx_gpio2mask(unsigned int gpio)$/;"	f	file:
+out_be32	gpiodrv.c	/^static inline void out_be32(volatile unsigned *addr, int val)$/;"	f	file:
+pbuf	fpgadrv.c	/^    unsigned short      *pbuf;  \/\/$/;"	m	struct:s_fpga_rm_argv	file:
+pdata	dpll.c	/^void pdata(unsigned char *pdata, int count)$/;"	f
+receive	spi.h	/^        unsigned int receive;$/;"	m	struct:spi_reg_t
+res	spi.h	/^        unsigned int res[2];$/;"	m	struct:spi_reg_t
+rtClause	fpgadrv.c	/^static unsigned char rtClause = 0;$/;"	v	file:
+rx_buf	fpgadrv.c	/^    void        *rx_buf;$/;"	m	struct:spi_transfer_t	file:
+s_FPGA_RM_ARGV	fpgadrv.c	/^}       s_FPGA_RM_ARGV;$/;"	t	typeref:struct:s_fpga_rm_argv	file:
+s_fpga_rm_argv	fpgadrv.c	/^typedef struct s_fpga_rm_argv$/;"	s	file:
+semid	gpiodrv.c	/^int semid;$/;"	v
+semun	gpiodrv.c	/^union semun$/;"	u	file:
+semun	spi.h	/^union semun {$/;"	u
+semun	spidrv.c	/^union semun$/;"	u	file:
+setbits32	gpiodrv.c	40;"	d	file:
+size	fpgadrv.c	/^    unsigned int        size;    \/\/ max FPGA_COPRO_MAX_SIZE$/;"	m	struct:s_fpga_rm_argv	file:
+slot	fpgadrv.c	/^    unsigned char       slot;    \/\/ 0\/1\/2\/3\/11$/;"	m	struct:s_fpga_rm_argv	file:
+speed_hz	fpgadrv.c	/^    unsigned int        speed_hz;$/;"	m	struct:spi_transfer_t	file:
+spi_dev_init	spi.c	/^int spi_dev_init(struct spi_device *spidev)$/;"	f
+spi_device	spi.h	/^struct spi_device {$/;"	s
+spi_flag	dplldrv.c	/^int spi_flag=0xff;$/;"	v
+spi_reg	spi.h	/^	volatile struct spi_reg_t		*spi_reg;$/;"	m	struct:spi_device	typeref:struct:spi_device::spi_reg_t
+spi_reg_read	spi.c	/^static void spi_reg_read(const volatile unsigned *addr, unsigned int *val)$/;"	f	file:
+spi_reg_t	spi.h	/^struct spi_reg_t {$/;"	s
+spi_reg_write	spi.c	/^static void spi_reg_write(volatile unsigned *addr, unsigned int val)$/;"	f	file:
+spi_setup	spi.c	/^int spi_setup(struct spi_device *spidev)$/;"	f
+spi_softc	spi.c	/^chipc_spi_softc_t spi_softc;$/;"	v
+spi_transfer	spi.c	/^int spi_transfer(struct spi_device *spidev, unsigned char *txbuf, unsigned char *rxbuf, int len)$/;"	f
+spi_transfer_t	fpgadrv.c	/^struct spi_transfer_t$/;"	s	file:
+spidev	spidrv.c	/^struct spi_device spidev;$/;"	v	typeref:struct:spi_device
+spidrv_exit	spidrv.c	/^int spidrv_exit(void)$/;"	f
+spidrv_init	spidrv.c	/^int spidrv_init(void)$/;"	f
+spidrv_initialized	spidrv.c	/^static int spidrv_initialized = 0;$/;"	v	file:
+spidrv_mmap_exit	spidrv.c	/^static void spidrv_mmap_exit()$/;"	f	file:
+spidrv_mmap_exit	spidrv.c	/^void spidrv_mmap_exit(void)$/;"	f
+spidrv_mmap_init	spidrv.c	/^int spidrv_mmap_init(void)$/;"	f
+spidrv_mmap_init	spidrv.c	/^static int spidrv_mmap_init()$/;"	f	file:
+spidrv_read	spidrv.c	/^int spidrv_read(unsigned char *txbuf, int txlen,unsigned char *rxbuf, int rxlen, unsigned char chip_select)$/;"	f
+spidrv_read	spidrv.c	/^spidrv_read(unsigned char *txbuf, int txlen,unsigned char *rxbuf, int rxlen, unsigned char chip_select)$/;"	f
+spidrv_sembufLock	spidrv.c	/^struct sembuf spidrv_sembufLock, spidrv_sembufUnlock;$/;"	v	typeref:struct:sembuf
+spidrv_sembufUnlock	spidrv.c	/^struct sembuf spidrv_sembufLock, spidrv_sembufUnlock;$/;"	v	typeref:struct:
+spidrv_semid	spidrv.c	/^int spidrv_semid;$/;"	v
+spidrv_semlock_init	spidrv.c	/^int spidrv_semlock_init(void)  $/;"	f
+spidrv_setup_init	spidrv.c	/^int spidrv_setup_init(void)$/;"	f
+spidrv_setup_init	spidrv.c	/^static int spidrv_setup_init()$/;"	f	file:
+spidrv_write	spidrv.c	/^int spidrv_write(unsigned char *txbuf, int txlen, int rxlen, unsigned char chip_select)$/;"	f
+spidrv_write	spidrv.c	/^spidrv_write(unsigned char *data, int len, int rxlen, unsigned char chip_select) $/;"	f
+states	spi.h	/^    unsigned int states;        \/* start ready to do read\/write transaction *\/$/;"	m	struct:chipc_spi_softc_s
+transmit	spi.h	/^        unsigned int transmit;$/;"	m	struct:spi_reg_t
+tx_buf	fpgadrv.c	/^    const void  *tx_buf;$/;"	m	struct:spi_transfer_t	file:
+usage	dpll.c	/^void usage(void)$/;"	f
+used	fpgadrv.c	/^    unsigned char       used;   \/\/$/;"	m	struct:s_fpga_rm_argv	file:
+val	gpiodrv.c	/^  int val;			\/* value for SETVAL *\/$/;"	m	union:semun	file:
+val	spi.h	/^   short val;          		\/*SETVAL用的值*\/$/;"	m	union:semun
+val	spidrv.c	/^ int val; \/\/信号量初始值                   $/;"	m	union:semun	file:
