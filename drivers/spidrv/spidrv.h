@@ -32,7 +32,7 @@ int spidrv_exit();
 返回值：-1 读取失败
 	0  读取成功
 */
-int fpga_spi_read(unsigned int addr, unsigned char *data, size_t count, unsigned char slot);
+int fpga_read(unsigned int addr, unsigned char *data, size_t count, unsigned char slot);
 
 /*
 本盘fpga写，单盘fpga写
@@ -41,7 +41,7 @@ int fpga_spi_read(unsigned int addr, unsigned char *data, size_t count, unsigned
 返回值：-1 写入失败
 	0  写入成功
 */
-int fpga_spi_write(unsigned int addr, unsigned char *data, size_t count, unsigned char slot);
+int fpga_write(unsigned int addr, unsigned char *data, size_t count, unsigned char slot);
 
 /*
 本盘dpll读
@@ -49,7 +49,7 @@ int fpga_spi_write(unsigned int addr, unsigned char *data, size_t count, unsigne
 返回值：-1 读取失败
 	0  读取成功
 */
-int dpll_spi_read(unsigned short addr, unsigned char *data, size_t count);
+int dpll_read(unsigned short addr, unsigned char *data, size_t count);
 
 /*
 本盘dpll写
@@ -58,7 +58,7 @@ int dpll_spi_read(unsigned short addr, unsigned char *data, size_t count);
 返回值：-1 写入失败
 	0  写入成功
 */
-int dpll_spi_write(unsigned short addr, unsigned char *data, size_t count);
+int dpll_write(unsigned short addr, unsigned char *data, size_t count);
 
 /*
 读单盘fpga比较复杂，分为实时读和循环读
@@ -81,7 +81,7 @@ fpga_spi_read。
 返回值：-1 获取失败
 	0  获取成功
 */
-int fpga_read_remote_get(int *clause);
+int fpga_circle_read_get(int *clause);
 
 /*
 配置要读取的单盘的槽位地址和长度
@@ -90,7 +90,7 @@ int fpga_read_remote_get(int *clause);
 返回值：-1 设置失败
 	0  设置成功
 */
-int fpga_read_remote_set(int clause, unsigned char slot, unsigned int addr, unsigned int size);
+int fpga_circle_read_set(int clause, unsigned char slot, unsigned int addr, unsigned int size);
 
 
 /*
@@ -99,7 +99,7 @@ int fpga_read_remote_set(int clause, unsigned char slot, unsigned int addr, unsi
 返回值：-1 获取失败
 	0  获取成功
 */
-int fpga_read_remote_inf(int clause, unsigned char *slot, unsigned int *addr, unsigned int *size);
+int fpga_circle_read_get_config(int clause, unsigned char *slot, unsigned int *addr, unsigned int *size);
 
 /*
 使能一条循环读条目
@@ -107,7 +107,7 @@ int fpga_read_remote_inf(int clause, unsigned char *slot, unsigned int *addr, un
 返回值：-1 获取失败
 	0  获取成功
 */
-int fpga_read_remote_en(int clause);
+int fpga_circle_read_enable(int clause);
 
 /*
 使能多个循环读条目，使能的过程是将单盘上的数据读到fpga缓冲区的过程
@@ -116,7 +116,7 @@ int fpga_read_remote_en(int clause);
 返回值：-1 获取失败
 	0  获取成功
 */
-int fpga_read_remote_block_en(unsigned short *enbuf, unsigned int size);
+int fpga_circle_read_block_enable(unsigned short *enbuf, unsigned int size);
 
 /*
 从fpga缓冲区将数据读出
@@ -124,7 +124,7 @@ int fpga_read_remote_block_en(unsigned short *enbuf, unsigned int size);
 返回值：-1 获取失败
 	0  获取成功
 */
-int fpga_read_remote(int clause, unsigned char slot, unsigned int addr, unsigned short *pbuf, unsigned int size);
+int fpga_circle_read(int clause, unsigned char slot, unsigned int addr, unsigned short *pbuf, unsigned int size);
 
 
 

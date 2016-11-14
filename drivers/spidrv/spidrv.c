@@ -2,372 +2,530 @@
 *  COPYRIGHT NOTICE
 *  Copyright (C) 2016 HuaHuan Electronics Corporation, Inc. All rights reserved
 *
-*  Author       	:fzs
-*  File Name        	:/home/kevin/works/projects/H20PN-2000/drivers/spidrv/spidrv.c
-*  Create Date        	:2016/09/22 16:14
-*  Last Modified      	:2016/09/22 16:14
-*  Description    	:
+*  Author               :yuhongyue
+*  File Name            :spidrv.c
+*  Create Date          :2016/11/5
+*  Last Modified        :2016/11/5
+*  Description      :
 */
-#include <stdio.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <string.h>
-
-#include <sys/ipc.h>  
-#include <sys/sem.h>  
-#include <sys/types.h>	
-#include <sys/mman.h>	
-#include "spi.h"
 #include "spidrv.h"
-#include "spidrv_common.h"
-
-
-#define MAP_SIZE 		4096UL
-#define MAP_MASK 		(MAP_SIZE - 1)
-
-
-static int initialized = 0;
 
 struct spi_device spidev;
-struct sembuf spidrv_sembufLock, spidrv_sembufUnlock;
 int spidrv_semid;
+struct sembuf spidrv_sembufLock, spidrv_sembufUnlock;
+static int spidrv_initialized = 0;
 
-#define MULTI_REG_LEN_MAX		512
-#define FLASH_PAGESIZE		256
 
-int spidrv_epcs_opt(struct spi_device *spi, int opcode, unsigned int addr, unsigned char *data, unsigned int count)
-{
-	unsigned char rxbuf[MULTI_REG_LEN_MAX] = {0};
-	unsigned char txbuf[MULTI_REG_LEN_MAX + 2] = {0};
-	unsigned int len = 0;
-	int ret = 0;
+#define MAP_SIZE            4096UL
+#define MAP_MASK            (MAP_SIZE - 1)
 
-	if(NULL == data)	
-		return -1;
+#ifdef H20RN181
 
-	if(OPCODE_RDSR == opcode)
-	{
-		txbuf[0] = opcode;
-		len = 2;
-	}
-	else if(OPCODE_WREN == opcode)
-	{
-		txbuf[0] = opcode;
-		len = 1;
-	}
-	else if(OPCODE_CHIP_ERASE == opcode)
-	{
-		txbuf[0] = opcode;
-		len = 1;
-	}
-	else if(OPCODE_ERASE_SECTOR == opcode)
-	{
-		txbuf[0] = opcode;
-		txbuf[1] = *data >> 16; 
-		txbuf[2] = *data >> 8; 
-		txbuf[3] = *data; 
-		len = 4;
-	}
-	else if(OPCODE_READ == opcode)
-	{
-		txbuf[0] = opcode;
-		txbuf[1] = addr >> 16; 
-		txbuf[2] = addr >> 8; 
-		txbuf[3] = addr; 
-		len = 4 + count;
-	
-	}
-	else if(OPCODE_WRITE == opcode)
-	{
-		unsigned int page_offset = addr%FLASH_PAGESIZE;
-		unsigned int page_size = 0;
-
-		txbuf[0] = opcode;
-		txbuf[1] = addr >> 16; 
-		txbuf[2] = addr >> 8; 
-		txbuf[3] = addr; 
-		if(page_offset+count <= FLASH_PAGESIZE)
-		{
-			len = 4 + count;
-			memcpy(&txbuf[4], data, count);
-		}
-		else{
-			printf("addr%256!=0 or count%256!=0 error\n");
-			return -1;
-		}
-	
-	}
-	else
-		return -1;
-
-	if(ret = spi_transfer(spi, txbuf, rxbuf, len) < 0)
-	{
-		printf("epcs_spi_opt spi_transfer error\n");
-		return -1;
-	}
-	if(OPCODE_RDSR == opcode)
-	{
-	   memcpy(data, &rxbuf[1], 1);
-	}
-	else if(OPCODE_READ == opcode)
-	{
-		memcpy(data, &rxbuf[4], count);
-	}
-
-	return 0;
-}
-
-int spidrv_mix_write(struct spi_device *spi,unsigned short addr, unsigned char *data, size_t count)
-{
-	int ret = 0;
-	unsigned int len = 0;
-	unsigned char rxbuf[MULTI_REG_LEN_MAX + 2] = {0};
-	unsigned char txbuf[MULTI_REG_LEN_MAX + 2] = {0};
-	unsigned short address = 0;
-
-	if (!data || count > MULTI_REG_LEN_MAX)
-		return -1;
-
-	if(CHIPSELECT_FPGA == spi->chip_select)
-	{
-		if(1 == count)
-		{
-			txbuf[0] = SPI_FPGA_WR_SINGLE;        
-		}
-		else 
-		{
-			txbuf[0] = SPI_FPGA_WR_BURST;
-		}
-		txbuf[1] = (unsigned char)((addr >> 8) & 0xff);
-		txbuf[2] = (unsigned char)((addr) & 0xff);
-
-		/*fill txbuf len equal to rx count*/
-		memcpy(&txbuf[3], data, count);
-
-		/* Build our spi message */
-		len = count + 4;
-	}
-	else if(CHIPSELECT_DPLL == spi->chip_select)
-	{
-		address = (addr << 1) & 0x7ffe;
-
-		txbuf[0] = (unsigned char)((address >> 8) & 0xff);
-		txbuf[1] = (unsigned char)((address) & 0xff);
-
-		/* MSB must be '1' to read */
-		txbuf[0] &= ~0x80;
-		/* LSB must be '1' to burst read */
-		if (count > 1)
-			txbuf[1] |= 0x01;
-
-		/*fill txbuf len equal to rx count*/
-		memcpy(&txbuf[2], data, count);
-
-		/* Build our spi message */
-		len = count + 2;
-	
-	}
-	else
-	{
-		printf("mix spi read error,chip select=%d\n",spi->chip_select);
-		return -1;
-	}
-	if(ret = spi_transfer(spi, txbuf, rxbuf, len) < 0)
-	{
-		printf("spi transfer error\n");
-		return -1;
-	}
-
-	return 0;
-}
-int spidrv_mix_read(struct spi_device *spi,unsigned short addr, unsigned char *data, size_t count)
-{
-	int ret = 0;
-	int len = 0;
-	unsigned char rxbuf[MULTI_REG_LEN_MAX + 2] = {0};
-	unsigned char txbuf[MULTI_REG_LEN_MAX + 2] = {0};
-	unsigned short address = 0;
-
-	if (!data || count > MULTI_REG_LEN_MAX)
-		return -1;
-
-	if(CHIPSELECT_FPGA == spi->chip_select)
-	{
-		if(1 == count)
-		{
-			txbuf[0] = SPI_FPGA_RD_SINGLE;        
-		}
-		else 
-		{
-			txbuf[0] = SPI_FPGA_RD_BURST;
-		}
-		txbuf[1] = (unsigned char)((addr >> 8) & 0xff);
-		txbuf[2] = (unsigned char)((addr) & 0xff);
-		txbuf[3] = 0;
-
-		/* Build our spi message */
-		len = count + 4;
-	}
-	else if(CHIPSELECT_DPLL == spi->chip_select)
-	{
-		address = (addr << 1) & 0x7ffe;
-
-		txbuf[0] = (unsigned char)((address >> 8) & 0xff);
-		txbuf[1] = (unsigned char)((address) & 0xff);
-
-		/* MSB must be '1' to read */
-		txbuf[0] |= 0x80;
-		/* LSB must be '1' to burst read */
-		if (count > 1)
-			txbuf[1] |= 0x01;
-
-		/* Build our spi message */
-		len = count + 2;
-	
-	}
-	else
-	{
-		printf("mix spi read error,chip select=%d\n",spi->chip_select);
-		return -1;
-	}
-	if(ret = spi_transfer(spi, txbuf, rxbuf, len) < 0)
-	{
-		printf("spi transfer error\n");
-		return -1;
-	}
-
-	/* memcpy(data, &rx_buf[2], count); */
-	if(CHIPSELECT_FPGA == spi->chip_select)
-	{
-	   memcpy(data, &rxbuf[4], count);
-	}
-	else if(CHIPSELECT_DPLL == spi->chip_select)
-	{
-	   memcpy(data, &rxbuf[2], count);
-	}
-	else 
-	{
-		printf("mix spi read error\n");
-		return -1;
-	}
-
-	return 0;
-
-	
-}
-
-static int spidrv_semlock_init()  
-{  
-	union semun arg;
-
-	spidrv_semid = semget(0x0812, 1, IPC_CREAT|IPC_EXCL|0666);
-	if(-1 == spidrv_semid)
-	{
-		initialized = 1;
-		spidrv_semid = semget(0x0812, 1, IPC_CREAT|0666);
-		if (spidrv_semid == -1){  
-			return -1;  
-		}  
-	}
-	else
-	{
-//		printf("sem created\n");
-		initialized = 0;
-		arg.val = 1;
-		semctl(spidrv_semid, 0, SETVAL, arg);  
-	}
-
-	spidrv_sembufLock.sem_num = 0;  
-	spidrv_sembufLock.sem_op = -1;  
-	spidrv_sembufLock.sem_flg = SEM_UNDO;  
-
-	spidrv_sembufUnlock.sem_num = 0;  
-	spidrv_sembufUnlock.sem_op = 1;  
-	spidrv_sembufUnlock.sem_flg = SEM_UNDO;  
-
-	return 0;
-}
-
-#define SPI_REGISTER_BASE 0xffe07000
+union semun arg;
+extern void *mapbase;
 int fd_mmap;
-static int spidrv_mmap_init()
-{
 
-	if((fd_mmap = open("/dev/mem", O_RDWR | O_SYNC)) == -1) 
-	{
-		return -1;
-	}
-	spidev.spi_reg = (struct spi_reg_t *)mmap(NULL, MAP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd_mmap, SPI_REGISTER_BASE);
-	if(NULL == spidev.spi_reg)
-		return -1;
-	return 0;
+
+/* Function : spidrv_write
+ *  - Write data to Keystone's SPI device via FIFO.
+ * Return :
+ * Note :
+ */
+
+int
+spidrv_write ( unsigned char *data, int len, int rxlen, unsigned char chip_select )
+{
+    int idx, m;
+    unsigned int value, ret;
+    int i;
+    void *fifo_mapbase, *virt_addr;
+    struct spi_device *spi = &spidev;
+
+    spi->chip_select = chip_select;
+    ret = mips53003_spi_enable ( spi->chip_select );
+    if ( 0 != ret )
+    {
+        printf ( "mips53003_spi_enable error!!!\n" );
+    }
+    /* len < 32 bytes */
+    if ( len > SPI_FIFO_MAX_SIZE )
+    {
+        SPI_ERROR ( ( "%s: Write failed : can not exceed 32 bytes!\n", __func__ ) );
+        return SPI_ERR_PARAM;
+    }
+
+    /* Write command/data to Keystone's SPI FIFO */
+    value = 0;
+    for ( idx = 0 ; idx < len ; idx++ )
+    {
+        m = idx % 4;
+        value |= ( *data << ( ( 3 - m ) * 8 ) );
+        data++;
+        if ( ( m == 3 ) || ( idx == ( len - 1 ) ) )
+        {
+            virt_addr = mapbase + ( SPI_FIFO_IO & MAP_MASK );
+            for ( i = 0; i < 800; i++ );
+            if ( CC_SPIFIFOIO_MASK || value )
+            {
+                * ( ( unsigned int * ) virt_addr ) = value;
+            }
+//            spi_fifo_write(CC_SPIFIFOIO_MASK, value);
+            value = 0;
+        }
+    }
+
+    ret = mips53003_spi_control ( spi->chip_select, rxlen, len, 0 );
+    if ( 0 != ret )
+    {
+        printf ( "mips53003_spi_control error!!!\n" );
+        return SPI_ERR_PARAM;
+    }
+
+    ret = mips53003_spi_disable ( spi->chip_select );
+    if ( 0 != ret )
+    {
+        printf ( "mips53003_spi_disable error!!!\n" );
+    }
+
+    return SPI_ERR_NONE;
 }
 
-static void spidrv_mmap_exit()
+/* Function : spidrv_read
+ *  - Read operation through Keystone's SPI.
+ * Return :
+ * Note :
+ *     For SPI read operation, we start to do really read transaction on FIFO
+ *     when we call function spidrv_read.
+ */
+int
+spidrv_read ( unsigned char *txbuf, int txlen, unsigned char *rxbuf, int rxlen, unsigned char chip_select )
 {
-	munmap((void *)spidev.spi_reg,MAP_SIZE);
-	close(fd_mmap);
+    chipc_spi_softc_t *s = &spi_softc;
+    int idx, m, i;
+    unsigned int value, ret;
+    void *fifo_mapbase, *virt_addr;
+    struct spi_device *spi = &spidev;
+
+    spi->chip_select = chip_select;
+    ret = mips53003_spi_enable ( spi->chip_select );
+    if ( 0 != ret )
+    {
+        printf ( "mips53003_spi_enable error!!!\n" );
+    }
+    if ( mips53003_spi_buf_write ( txbuf, txlen ) )
+    {
+        printf ( "%s: Failed to do write buf operation!\n", __func__ );
+    }
+
+    //SPI_INIT_CHK;
+    /*
+     * (Reading data length) <= 32 bytes
+     * - The Maximum size of SPI's FIFO is 32 bytes(once time).
+     */
+    if ( rxlen > SPI_FIFO_MAX_SIZE )
+    {
+        SPI_ERROR ( ( "%s: Read failed : can not exceed 32 bytes!\n", __func__ ) );
+        return SPI_ERR_PARAM;
+    }
+
+    //SPI_INIT_CHK;
+    /*
+     *  if s->states == SPI_STATES_WRITE, start to do Read transaction on FIFO
+     *  ReadDataCnt = len, WriteDataCnt = s->buf_index, WriteCmdCnt = 0
+     */
+
+    if ( s->states == SPI_STATES_WRITE || s->states == SPI_STATES_ENABLE )
+    {
+        if ( s->states == SPI_STATES_WRITE )
+        {
+            if ( mips53003_spi_write_for_read ( s->buf, s->buf_index, rxlen ) )
+            {
+                SPI_ERROR ( ( "%s: Failed to write data to SPI FIFO at SPI_%d!\n", __func__, s->id ) );
+                return SPI_ERR_PARAM;
+            }
+        }
+
+        s->states = SPI_STATES_READ;
+    }
+    else
+    {
+        SPI_ERROR ( ( "%s: Failed to do SPI read operation!\n", __func__ ) );
+        return SPI_ERR_PARAM;
+    }
+    for ( i = 0; i < 10000; i++ ); /*yu20160711*/
+    /* Get spi status */
+    value = mips53003_spi_status_get();
+    /* Check FIFO is not empty for reading */
+    if ( value & CC_SPISTS_FIFOE )
+    {
+        SPI_ERROR ( ( "%s: Read failed at SPI: FIFO is empty for reading!\n", __func__ ) );
+        return SPI_ERR_INTERNAL;
+    }
+
+    /* Read data from FIFO IO register until FIFO is empty(read 4 bytes each time) */
+
+    value = 0;
+    for ( idx = 0 ; idx < rxlen ; idx++ )
+    {
+        m = idx % 4;
+        if ( m == 0 )
+        {
+            virt_addr = mapbase + ( SPI_FIFO_IO & MAP_MASK );
+            for ( i = 0; i < 800; i++ );
+            value = * ( ( unsigned int * ) virt_addr );
+//      value = spi_fifo_read(0, 0);
+        }
+        *rxbuf++ = ( unsigned char ) ( value >> ( ( 3 - m ) * 8 ) );
+    }
+#if 1
+    ret = mips53003_spi_disable ( spi->chip_select );
+    if ( 0 != ret )
+    {
+        printf ( "mips53003_spi_disable error!!!\n" );
+    }
+#endif
+    return SPI_ERR_NONE;
+}
+
+int spidrv_setup_init ( void )
+{
+    struct spi_device *spi = &spidev;
+    unsigned int flags = 0;
+    unsigned long bus_hz;
+    int rv = SPI_ERR_NONE;
+    chipc_spi_softc_t *s = &spi_softc;
+    unsigned int value = 0;
+    unsigned int  sys_freq, spi_freq;
+    int  n, ret;
+
+    spi->mode = SPI_MODE_3;
+    spi->bits_per_word = 8;
+    spi->max_speed_hz = 8000000;
+    spi->chip_select = 0;               //new add
+
+    memset ( s, 0, sizeof ( s ) );
+    s->id = spi->chip_select;
+    s->buf_index = 0;
+    s->states = SPI_STATES_DISABLE;
+    /***************************************************************/
+    /* Initialize the hardware */
+    /* Select the SPI interface for SPI device id */
+    if ( mips53003_spi_interface_select ( s->id, 1 ) )
+    {
+        SPI_ERROR ( ( "%s: Failed on enabling SPI_%d!\n", __func__, s->id ) );
+        return SPI_ERR_INTERNAL;
+    }
+    /* Set the SPI mode */
+    value = CC_SPI_MODE_CPOL_1_CPHA_1;
+    if ( mips53003_spi_mode_set ( SPI_MODE_CTRL_MODE, value ) )
+    {
+        SPI_ERROR ( ( "%s: Failed to set device mode at SPI_%d!\n", __func__, s->id ) );
+        return SPI_ERR_PARAM;
+    }
+    value = CC_SPIMCTRL_BE;
+
+    /* Set the SPI endian */
+    if ( mips53003_spi_mode_set ( SPI_MODE_CTRL_ENDIAN, value ) )
+    {
+        SPI_ERROR ( ( "%s: Failed to set device endian at SPI_%d!\n", __func__, s->id ) );
+        return SPI_ERR_PARAM;
+    }
+    if ( spi->mode & SPI_LSB_FIRST )
+    {
+        //      flags |= CC_SPIMCTRL_LSB_MASK;
+        flags |= 0x100;
+    }
+    /* Set the SPI RACK enable */
+    value = ( flags & CC_SPIMCTRL_ACKEN_MASK ) ? CC_SPIMCTRL_ACKEN : 0;
+    if ( mips53003_spi_mode_set ( SPI_MODE_CTRL_ACKEN, value ) )
+    {
+        SPI_ERROR ( ( "%s: Failed to set device RACK at SPI_%d!\n", __func__, s->id ) );
+        return SPI_ERR_PARAM;
+    }
+    /* Set the SPI LSB first enable */
+    value = ( flags & CC_SPIMCTRL_LSB_MASK ) ? CC_SPIMCTRL_LSB_FIRST : 0;
+    if ( mips53003_spi_mode_set ( SPI_MODE_CTRL_LSBEN, value ) )
+    {
+        SPI_ERROR ( ( "%s: Failed to set device LSB first at SPI_%d!\n", __func__, s->id ) );
+        return SPI_ERR_PARAM;
+    }
+    /* Set the SPI clodk */
+    //    value = spi->max_speed_hz;
+    /* -------- set spi clock --------- */
+    /* get Fsys */
+    sys_freq = 150000000;
+    SPI_MSG ( ( "%s: sys_clock = %d, speed_hz = %d\n", __func__, sys_freq, spi->max_speed_hz ) );
+
+    /* retrive the N value */
+    /* spi clock counting formula  : spi_freq = sys_freq / (2^(N+1)) */
+    for ( n = 0; n < SPI_CCD_MAX; n++ )
+    {
+        spi_freq = sys_freq / ( 2 << n );
+        if ( spi_freq <= spi->max_speed_hz )
+        {
+            break;
+        }
+    }
+
+    SPI_MSG ( ( "%s: spi_freq = %d, clock divider parameters N = 0x%x\n",
+                __func__, spi_freq, n ) );
+
+    /* Set the SPI clock (clock divider parameters n : [7:4] in SPI Moder Control register) */
+    value = n << 4;
+    if ( mips53003_spi_mode_set ( SPI_MODE_CTRL_CLOCK, value ) )
+    {
+        SPI_ERROR ( ( "%s: Failed to set device clock frequence at SPI_%d!\n", __func__, s->id ) );
+        return SPI_ERR_PARAM;
+    }
+
+    ret = mips53003_spi_enable ( spi->chip_select );
+    if ( ret < 0 )
+    {
+        ret = -1;
+        goto out_unmap_regs;
+    }
+
+    return 0;
+
+out_unmap_regs:
+
+    return 0;
+}
+int spidrv_mmap_init ( void *ptr )
+{
+#if 0
+    int fd;
+    void *int_mapbase, *virt_addr;
+    unsigned int  reg_val = 0, temp;
+    /* mmap SERIAL_IO_SEL register */
+    if ( ( fd_mmap = open ( "/dev/mem", O_RDWR | O_SYNC ) ) == -1 )
+    {
+        return ERROR;
+    }
+    mapbase = mmap ( NULL, MAP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd_mmap, SPI_REGISTER_BASE );
+#endif
+    if ( NULL == ptr )
+    {
+        printf ( "segmentfault in spidrv_mmap_init\n" );
+        return -1;
+    }
+    mapbase = ptr;
+    return 0;
+}
+void spidrv_mmap_exit ( void )
+{
+    munmap ( mapbase, MAP_SIZE );
+    close ( fd_mmap );
+}
+
+#endif
+
+#if defined(H20RN1000)||defined(H20RN2000)
+union semun
+{
+    int val; //信号量初始值
+    struct semid_ds *buf;
+    unsigned short int *array;
+    struct seminfo *__buf;
+};
+union semun arg;
+
+int spidrv_read ( unsigned char *txbuf, int txlen, unsigned char *rxbuf, int rxlen, unsigned char chip_select )
+{
+    unsigned int value;
+    int ret, len;
+    struct spi_device *spi = &spidev;
+    unsigned char buf[MULTI_REG_LEN_MAX + 2] = {0};
+
+    if ( chip_select > 2 )
+    {
+        printf ( "chip select %d error\n", chip_select );
+        return -1;
+    }
+    if ( rxlen > MULTI_REG_LEN_MAX )
+    {
+        printf ( "spidrv_read rxlen = %d, error\n", rxlen );
+        return -1;
+    }
+    spi->chip_select = chip_select;
+
+    if ( CHIPSELECT_FPGA == spi->chip_select )
+    {
+        txlen = 4; /*181和2000时序不同，txlen统一用的3，这里需要4*/
+    }
+
+    len = rxlen + txlen;
+
+    spi_setup ( spi );
+
+    if ( ret = spi_transfer ( spi, txbuf, buf, len ) < 0 )
+    {
+        printf ( "spi transfer error\n" );
+        return -1;
+    }
+    memcpy ( rxbuf, buf + txlen, rxlen );
+
+    return 0;
+}
+
+int spidrv_write ( unsigned char *txbuf, int txlen, int rxlen, unsigned char chip_select )
+{
+    unsigned int value;
+    int ret, len;
+    struct spi_device *spi = &spidev;
+    unsigned char buf[MULTI_REG_LEN_MAX + 2] = {0};
+
+    if ( chip_select > 2 )
+    {
+        printf ( "chip select %d error\n", chip_select );
+        return -1;
+    }
+    if ( txlen > MULTI_REG_LEN_MAX )
+    {
+        printf ( "spidrv_write txlen = %d, error\n", txlen );
+        return -1;
+    }
+
+    if ( CHIPSELECT_FPGA == spi->chip_select )
+    {
+        txlen = txlen + 1; /*181和2000时序不同，txlen统一用的3，这里需要4*/
+    }
+    spi->chip_select = chip_select;
+
+    len = txlen;
+
+    spi_setup ( spi );
+
+    if ( ret = spi_transfer ( spi, txbuf, buf, len ) < 0 )
+    {
+        printf ( "spi transfer error\n" );
+        return -1;
+    }
+
+    return 0;
 }
 
 static int spidrv_setup_init()
 {
-	int i = 0;
+    int i = 0;
 
-	semop(spidrv_semid, &spidrv_sembufLock, 1);
+    semop ( spidrv_semid, &spidrv_sembufLock, 1 );
 
-	spi_dev_init(&spidev);
+    spi_dev_init ( &spidev );
 
-	for(i = 0; i <4; i++)
-	{
-		spidev.max_speed_hz = 6500000;//the real rate 6.25M
-		spidev.chip_select = i;
-		spidev.mode = SPI_MODE_3;
-		spidev.bits_per_word = 8;
+    for ( i = 0; i < 4; i++ )
+    {
+        spidev.max_speed_hz = 6500000;//the real rate 6.25M
+        spidev.chip_select = i;
+        spidev.mode = SPI_MODE_3;
+        spidev.bits_per_word = 8;
 
-		spi_setup(&spidev);
-	}
+        spi_setup ( &spidev );
+    }
 
-	semop(spidrv_semid, &spidrv_sembufUnlock, 1);
+    semop ( spidrv_semid, &spidrv_sembufUnlock, 1 );
 
-	return 0;
+    return 0;
 }
-int spidrv_init()
+
+#define SPI_REGISTER_BASE 0xffe07000
+int fd_mmap;
+static int spidrv_mmap_init ( void *ptr )
 {
-	memset(&spidev, 0, sizeof(spidev));
-
-	if(spidrv_semlock_init())
-	{
-		SPIDRV_PRINT("spidrv semlock init err\n");
-		return -1;
-	}
-	if(spidrv_mmap_init())
-	{
-		SPIDRV_PRINT("spidrv mmap init err\n");
-		return -1;
-	}
-	/*need sem lock, I think*/
-	if(0 == initialized)
-	{
-		if(spidrv_setup_init())
-		{
-			SPIDRV_PRINT("spidrv spi setup init error\n");	
-			return -1;
-		}
-		SPIDRV_PRINT("Initialize spidrv successfully\n");	
-	}
-
-
-	return 0;
+#if 0
+    if ( ( fd_mmap = open ( "/dev/mem", O_RDWR | O_SYNC ) ) == -1 )
+    {
+        return -1;
+    }
+    spidev.spi_reg = ( struct spi_reg_t * ) mmap ( NULL, MAP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd_mmap, SPI_REGISTER_BASE );
+    if ( NULL == spidev.spi_reg )
+    {
+        return -1;
+    }
+#endif
+    if ( NULL == ptr )
+    {
+        printf ( "segmentfault in spidrv_mmap_init\n" );
+        return -1;
+    }
+    spidev.spi_reg = ptr;
+    return 0;
 }
-int spidrv_exit()
+static void spidrv_mmap_exit()
 {
-	spidrv_mmap_exit();
-//	spidrv_semlock_exit();
-	return 0;
+    munmap ( ( void * ) spidev.spi_reg, MAP_SIZE );
+    close ( fd_mmap );
+}
+
+#endif
+
+int spidrv_semlock_init ( void )
+{
+    int ret = 0;
+
+    spidrv_semid = semget ( 0x0812, 1, IPC_CREAT | IPC_EXCL | 0666 );
+    if ( spidrv_semid == -1 )
+    {
+        spidrv_initialized = 1;
+        spidrv_semid = semget ( 0x0812, 1, IPC_CREAT | 0666 );
+        if ( spidrv_semid == -1 )
+        {
+		printf("spidrv_semid=%d\n",spidrv_semid);
+            return -1;
+        }
+    }
+    else
+    {
+
+        spidrv_initialized = 0;
+        arg.val = 1;
+        ret = semctl ( spidrv_semid, 0, SETVAL, arg );
+    }
+
+    spidrv_sembufLock.sem_num = 0;
+    spidrv_sembufLock.sem_op = -1;
+    spidrv_sembufLock.sem_flg = SEM_UNDO;
+
+    spidrv_sembufUnlock.sem_num = 0;
+    spidrv_sembufUnlock.sem_op = 1;
+    spidrv_sembufUnlock.sem_flg = SEM_UNDO;
+	return ret;
 }
 
 
+int spidrv_init ( void *ptr )
+{
+    int ret;
 
+    memset ( &spidev, 0, sizeof ( spidev ) );
+
+    if ( spidrv_semlock_init() )
+    {
+        printf ( "spidrv semlock init err\n" );
+        return -1;
+    }
+    if ( spidrv_mmap_init ( ptr ) )
+    {
+        printf ( "spidrv mmap init err\n" );
+        return -1;
+    }
+//  if(0 == spidrv_initialized)
+//  {
+    if ( spidrv_setup_init() )
+    {
+        printf ( "spidrv spi setup init error\n" );
+        return -1;
+    }
+    printf ( "Initialize spidrv successfully\n" );
+//  }
+
+    return 0;
+}
+int spidrv_exit ( void )
+{
+    spidrv_mmap_exit();
+    return 0;
+}
 
 
 
