@@ -14,7 +14,8 @@ CC=$5
 #myver=Ver3.05-t #2016-6-2 test wdt gpio
 #myver=Ver3.05tt #2016-7-4 test wdt delete iptables
 #myver=Ver3.06 #2016-7-12 1.refresh wdt.ko v2.04 2.gpio set add sth 
-myver=Ver3.07 #2016-10-17 1.rtc time reconfig  2.syslog new filesystem 3.outband port led set 
+#myver=Ver3.07 #2016-10-17 1.rtc time reconfig  2.syslog new filesystem 3.outband port led set 
+myver=v001r001 #2016-11-22 1.just modify the version number 
 
 vecho() { [ "${quiet}" = "silent_" ] || echo "$@" ; }
 
