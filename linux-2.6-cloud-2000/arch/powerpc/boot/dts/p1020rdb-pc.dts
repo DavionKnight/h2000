@@ -82,22 +82,37 @@
                                  label = "U-Boot Env";
                                  read-only;
                          };
-
 			partition@400000  {
-				/* 4MB for env  Image */
-				reg = <0x00400000 0x01400000 >;
-				label = "KRD Image";
+				/* 32MB for kernel  Image */
+				reg = <0x00400000 0x02000000 >;
+				label = "KRD1 Image";
+				//read-only;
+			};
+			partition@2400000  {
+				/* 32MB for kernel  Image */
+				reg = <0x02400000 0x02000000 >;
+				label = "KRD2 Image";
+				//read-only;
+			};
+			partition@4400000  {
+				/* 2MB for itable */
+				reg = < 0x04400000 0x00200000>;
+				label = "itable";
+				//read-only;
+			};
+			partition@4600000  {
+				/* 416MB for application*/
+				reg = < 0x04600000 0x1a000000>;
+				label = "application";
+				//read-only;
+			};
+			partition@1e600000  {
+				/* 416MB for data*/
+				reg = < 0x1e600000 0x21000000>;
+				label = "data";
 				//read-only;
 			};
 
-			partition@1800000  {
-				/* 4MB for Linux Kernel Image */
-				reg = < 0x01800000 0x3e800000>;
-				label = "Application";
-				//read-only;
-			};
-
-		
 		};
 
 		L2switch@2,0 {
