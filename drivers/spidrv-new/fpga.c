@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
 		printf("fpga write <slot:hex> <addr:hex> <data:hex>\n\n");
 		printf("slot <0-0xf> unit board link GU08 TU02\n");
 		printf("     <0xe-0xf> master board link PXPXMM\n\n");
-		printf("demo:	fpga read 0x0 0x0 2\n");
+		printf("demo:	fpga read 0x0 0x0 4\n");
 		printf("	fpga write 0x0 0x85 0xee\n");
 	}
 	
