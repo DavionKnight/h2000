@@ -606,6 +606,10 @@ static int fsl_pq_mdio_probe(struct of_device *ofdev,
 		if (err) {
 			dev_err(dev_n, "can't request gpio #%d: %d\n", 5, err);
 		}
+		err = gpio_request(8, dev_name(dev_n));
+		if (err) {
+			dev_err(dev_n, "can't request gpio #%d: %d\n", 8, err);
+		}
 		
 		BCM53101_C_init();
 #endif
