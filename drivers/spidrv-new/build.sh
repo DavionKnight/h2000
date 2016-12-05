@@ -8,11 +8,13 @@ ppc_85xxDP-gcc spi.c spidrv.c fpgadrv.c dplldrv.c  gpiodrv.c --shared -fPIC  -o 
 ppc_85xxDP-gcc fpga.c -o fpga -lspidrv -L ./
 ppc_85xxDP-gcc dpll.c -o dpll -lspidrv -L ./
 ppc_85xxDP-gcc epcs.c -o epcs -lspidrv -L ./
+ppc_85xxDP-gcc eeprom.c -o eeprom -lspidrv -L ./
 
 cp libspidrv.so /tftpboot
 cp fpga /tftpboot
 cp dpll /tftpboot
 cp epcs /tftpboot
+cp eeprom /tftpboot
 
 
 

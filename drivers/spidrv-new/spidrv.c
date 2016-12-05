@@ -345,11 +345,11 @@ int spidrv_write(unsigned char *txbuf, int txlen, int rxlen, unsigned char chip_
 		return -1;
 	}
 
+	spi->chip_select = chip_select;
 	if(CHIPSELECT_FPGA == spi->chip_select)
 	{
 		txlen = txlen + 1; /*181和2000时序不同，txlen统一用的3，这里需要4*/
 	}
-	spi->chip_select = chip_select;
 
 	len = txlen;
 
