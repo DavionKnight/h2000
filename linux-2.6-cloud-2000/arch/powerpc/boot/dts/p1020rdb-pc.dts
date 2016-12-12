@@ -107,7 +107,7 @@
 				//read-only;
 			};
 			partition@1e600000  {
-				/* 416MB for data*/
+				/* 528MB for data*/
 				reg = < 0x1e600000 0x21000000>;
 				label = "data";
 				//read-only;
