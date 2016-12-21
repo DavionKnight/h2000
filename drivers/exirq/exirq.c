@@ -16,14 +16,20 @@ int fun_pthread(void *arg)
 	int count = 0;
 	int bcmfd;
 	
-	bcmfd = open( "/dev/exirq", O_RDWR);
 	while(1)
 	{
+		bcmfd = open( "/dev/exirq", O_RDWR);
+		if(bcmfd<0)
+		{
+			sleep(1);
+			printf("bcmfd = %d\n",bcmfd);
+			continue;
+		}
 		ioctl(bcmfd, WAIT_FOR_EXTERN_INTERRUPT, 0); 
 		printf("get an interrupt, count=%d\n",++count);
-		sleep(1);
+		close(bcmfd);
+		
 	}
-	close(bcmfd);
 }
 
 int main(int argc, char *argv[])
@@ -35,11 +41,7 @@ int main(int argc, char *argv[])
 
 	pthread_create(&id_1, NULL, (void *)fun_pthread, &arg1);
 
-	while(1)
-	{
-		sleep(1);
-	}
-	sleep(1);
+	pthread_join(id_1,NULL);
 	return 0;
 }
 

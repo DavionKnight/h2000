@@ -1,5 +1,5 @@
 #!/bin/bash
-
+ctags -R
 
 export KPATH=/home/kevin/works/projects/H20RN-2000/linux-2.6-cloud-2000 
 export K_SRC_PATH=/home/kevin/works/projects/H20RN-2000/linux-2.6-cloud-2000 
