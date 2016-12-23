@@ -38,12 +38,6 @@ mkdir /os1/
 mkdir /os2/
 mkdir /data
 
-mkdir /home/bin
-mkdir /home/cfg
-mkdir /data/dat
-mkdir /data/ver
-sync
-
 ubiattach /dev/ubi_ctrl -m 2  
 mount -t ubifs /dev/ubi0_0 /os1/
 ubiattach /dev/ubi_ctrl -m 3  
@@ -52,11 +46,15 @@ ubiattach /dev/ubi_ctrl -m 5
 mount -t ubifs /dev/ubi2_0 /home/
 ubiattach /dev/ubi_ctrl -m 6  
 mount -t ubifs /dev/ubi3_0 /data/ 
-#mount -t ubifs ubi0:kernel /boot/
-#mount -t ubifs ubi0:application /home/ -o sync
-#/bin/mount -t ubifs ubi0:tools /tools/
-#/bin/mount -t ubifs ubi0:upgrade /upgrade/
+
+
+mkdir /home/bin
+mkdir /home/cfg
+mkdir /data/dat
+mkdir /data/ver
+sync
 #addby zjj
+
 
 #add by tianzhy
 ifconfig lo 127.0.0.1
@@ -81,8 +79,8 @@ then
         fi
 else
         echo "system running..."
-        /bin/chmod 777 /home/starter.sh
-        /bin/sh /home/starter.sh
+        /bin/chmod 777 /home/bin/autorun.sh
+        /bin/sh /home/bin/autorun.sh
 fi
 
 
