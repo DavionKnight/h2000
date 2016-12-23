@@ -19,10 +19,12 @@ make ARCH=powerpc CROSS_COMPILE=ppc_85xxDP-
 ppc_85xxDP-gcc netlink_state.c -o netlink_state
 ppc_85xxDP-gcc getstate.c -o getstate
 ppc_85xxDP-gcc eth0ioctl.c -o eth0ioctl 
+ppc_85xxDP-gcc rawSocket.c -o rawSocket -lpthread
 
 cp outband.ko /tftpboot/
 cp netlink_state /tftpboot/
 cp getstate /tftpboot/
 cp eth0ioctl /tftpboot/
+cp rawSocket /tftpboot/
 
 

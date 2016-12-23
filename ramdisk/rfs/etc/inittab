@@ -1,4 +1,4 @@
 console::sysinit:/etc/init.d/rcS
 #ttyS0::askfirst:-/bin/sh
-::respawn:-/bin/login
+::respawn:-/bin/HHlogin
 ::ctrlaltdel:/bin/umount -a -r
