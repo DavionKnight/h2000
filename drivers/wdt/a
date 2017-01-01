@@ -1,0 +1,23 @@
+#!/bin/bash
+
+
+#export KPATH=/home/dowslake/mts180/kernel/linux-2.6-cloud-1604 
+#export K_SRC_PATH=/home/dowslake/mts180/kernel/linux-2.6-cloud-1604 
+export KPATH=/home/kevin/works/projects/H20RN-2000/linux-2.6-cloud-2000 
+export K_SRC_PATH=/home/kevin/works/projects/H20RN-2000/linux-2.6-cloud-2000
+
+export PATH=/home/kevin/Documents/ppc-tools/usr/bin:$PATH
+TARGET_ARCH=powerpc
+
+#export CROSS_COMPILE=ppc_85xxDP-
+
+
+rm ./build -rf
+
+
+make ARCH=powerpc CROSS_COMPILE=ppc_85xxDP- 
+
+#cp ./build/wdt.ko  /tftpboot/wdt.ko
+
+
+echo "copy wdt.ko finished."

@@ -58,7 +58,7 @@ sync
 
 #add by tianzhy
 ifconfig lo 127.0.0.1
-/sbin/insmod /usr/bin/wdt.ko
+#/sbin/insmod /usr/bin/wdt.ko
 
 
 tftp_cliet_ip=192.168.1.1
