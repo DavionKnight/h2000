@@ -19,37 +19,40 @@
 #define BIN_LOGIN		"/bin/login"
 #define BIN_SH			"/bin/sh"
 
+#define START_LINUXSH	0	
+#define START_VTYSH	1	
+
 int execute_and_wait(int opt)
 {
 	pid_t cpid;
 	int status;
 
-	cpid = fork();
-
-	if(cpid == 0) //child 
+	if(START_LINUXSH == opt)
 	{
-		if(1 == opt)
-		{
-			char *argv[]={BIN_SH, HOME_BIN_AUTORUN,NULL};
-			int ret =execv(BIN_SH, argv);
+		char *argv[]={BIN_LOGIN, NULL};
+		int ret =execv(BIN_LOGIN, argv);
 
-			_exit(1);
-		}
-		else if(0 == opt)
-		{
-			char *argv[]={BIN_LOGIN, NULL};
-			int ret =execv(BIN_LOGIN, argv);
+		_exit(1);
 
-			_exit(1);
-			
-		}
-		else
-			_exit(1);
-		
 	}
-	else //father 
+	if(START_VTYSH == opt)
 	{
-		waitpid(cpid,&status,0);
+		cpid = fork();
+
+		if(cpid == 0) //child 
+		{
+			char *argv[]={HOME_BIN_VTYSH, NULL};
+			int ret =execv(HOME_BIN_VTYSH, argv);
+	
+			_exit(1);
+		}
+		else //father 
+		{
+			waitpid(cpid,&status,0);
+			printf("vtysh exit, status = 0x%x\n",status);
+			exit(0);
+		}
+
 	}
 }
 
@@ -84,13 +87,14 @@ int main()
 	vtysh_signal_init ();
 	if((!access(HOME_BIN_AUTORUN, 0))&&(!access(HOME_BIN_VTYSH, 0)))
 	{
-		printf("App exist, startup...\n");
+		printf("App is existent, startup...\n");
 //		signal(SIGINT, SIG_DFL);
-		execute_and_wait(1);
-		printf("App execute stop, start Linux Shell\n");
+		execute_and_wait(START_VTYSH);
 	}
-	execute_and_wait(0);
-		
+	else
+		execute_and_wait(START_LINUXSH);
+
+	return 0;
 }
 
 
