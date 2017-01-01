@@ -63,7 +63,7 @@ ifconfig lo 127.0.0.1
 
 tftp_cliet_ip=192.168.1.1
 tftp_server_ip=192.168.1.254
-if [ ! -f /home/starter.sh ]
+if [ ! -f /home/bin/autorun.sh ]
 then
         cd /root
         echo "download applicaion..."
