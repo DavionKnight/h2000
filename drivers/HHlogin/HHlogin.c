@@ -48,8 +48,11 @@ int execute_and_wait(int opt)
 		}
 		else //father 
 		{
-			waitpid(cpid,&status,0);
-			printf("vtysh exit, status = 0x%x\n",status);
+			/*status 低8bits是信号，高8bits记录exit的返回值*/
+			/*当正常返回的时候，waitpid返回收集到的子进程的进程ID*/
+			int ret = waitpid(cpid,&status,0);
+			printf("\nvtysh exit,return code:[status=0x%x][pid=%d]\n", status, ret);
+			usleep(10000);
 			exit(0);
 		}
 
