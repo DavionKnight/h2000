@@ -65,6 +65,7 @@ tftp_cliet_ip=192.168.1.1
 tftp_server_ip=192.168.1.254
 if [ ! -f /home/bin/autorun.sh ]
 then
+	insmod /usr/bin/wdt.ko #insmod wdt if no application
         cd /root
         echo "download applicaion..."
         /sbin/ifconfig eth0  ${tftp_cliet_ip}
