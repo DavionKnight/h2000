@@ -450,8 +450,6 @@ int hsl_eth0_set_duplex ( int duplex )
 		return -1;
 	}
 
-	if(duplex == IFNET_FULLDUPLEX)
-
 	hsl_eth0_set_autoneg(2);
 	bcm53101_read(BCM53101_C, 0x11, 0, &value);
 	setval = (duplex == IFNET_FULLDUPLEX)?(value|(1<<8)):(value&(!(1<<8)));
