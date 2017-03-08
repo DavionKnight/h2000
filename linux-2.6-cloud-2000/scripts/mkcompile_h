@@ -16,7 +16,8 @@ CC=$5
 #myver=Ver3.06 #2016-7-12 1.refresh wdt.ko v2.04 2.gpio set add sth 
 #myver=v001r001 #2016-12-23 first ipran version 
 #myver=v001r002 #2017-01-12 update HHlogin 
-myver=v001r003 #2017-02-13 insmod wdt if no application
+#myver=v001r003 #2017-02-13 insmod wdt if no application
+myver=v001r004 #2017-03-08 eth0 up auto
 
 vecho() { [ "${quiet}" = "silent_" ] || echo "$@" ; }
 
