@@ -17,7 +17,8 @@ CC=$5
 #myver=v001r001 #2016-12-23 first ipran version 
 #myver=v001r002 #2017-01-12 update HHlogin 
 #myver=v001r003 #2017-02-13 insmod wdt if no application
-myver=v001r004 #2017-03-08 eth0 up auto
+#myver=v001r004 #2017-03-08 eth0 up auto
+myver=v001r005 #2017-03-13 timeslice 50ms
 
 vecho() { [ "${quiet}" = "silent_" ] || echo "$@" ; }
 
