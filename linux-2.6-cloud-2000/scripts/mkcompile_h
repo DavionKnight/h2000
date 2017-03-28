@@ -18,7 +18,8 @@ CC=$5
 #myver=v001r002 #2017-01-12 update HHlogin 
 #myver=v001r003 #2017-02-13 insmod wdt if no application
 #myver=v001r004 #2017-03-08 eth0 up auto
-myver=v001r005 #2017-03-13 timeslice 50ms
+#myver=v001r005 #2017-03-13 timeslice 50ms
+myver=v001r006 #2017-03-20 disable IPv6 log msg
 
 vecho() { [ "${quiet}" = "silent_" ] || echo "$@" ; }
 

@@ -179,6 +179,7 @@ int bcm53101_write(unsigned char which_sw, unsigned char page, unsigned char add
 		}while(s_count > 0);
 	}
 END:
+	udelay(10);
         mutex_unlock(&bcm53101_lock);
 	if(ret_val)
 		return -1;
@@ -257,6 +258,7 @@ int bcm53101_read(unsigned char which_sw, unsigned char page, unsigned char addr
 		value[3] = setval;
 	}
 END:
+	udelay(10);
         mutex_unlock(&bcm53101_lock);
 	if(ret_val)
 		return -1;

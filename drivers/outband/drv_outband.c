@@ -10,6 +10,7 @@
 #include <linux/time.h>
 #include <linux/irq.h>
 #include <linux/workqueue.h>	/* We need tq_struct.	 */
+#include <linux/kthread.h> 
 #include "phy_api.h"
 
 #ifndef NETLINK_2000
@@ -31,7 +32,7 @@ struct message_info {
 
 struct message_info link_sock_mes;
 extern struct sock *netlink_sock;
-
+struct task_stuct *task;
 /*
 extern unsigned long  linkstatus_callback_funcs;
 #define LINKSTATUS_FUNC_MAP(func) (linkstatus_callback_funcs=(unsigned long)func)
@@ -120,32 +121,35 @@ int genphy_read_link(unsigned char *link_status)
 
 static struct timer_list link_scan_timer; 
 unsigned char outband_link_status = 0;
+extern unsigned char outband_status_get();
 
 void outband_phy_link_status_scan(void)
 {
 	unsigned char link_status = 0;
-	genphy_read_link(&link_status);
-
-	if(outband_link_status != link_status)
+	unsigned char eth0_status = 0;
+	while(1)
 	{
-		outband_link_status = link_status;
-		linkstatus_change(0, 0, link_status, 0);	
-//		printk("link status change:%d\n",link_status);
-	}
+		genphy_read_link(&link_status);
+		eth0_status = outband_status_get();
+		link_status = eth0_status && link_status;
 
-        link_scan_timer.expires = jiffies+(HZ*1);                                        
-        add_timer(&link_scan_timer);
+		if(outband_link_status != link_status)
+		{
+			outband_link_status = link_status;
+			linkstatus_change(0, 0, link_status, 0);	
+					printk("link status change:%d\n",link_status);
+		}
+
+		msleep(1000);
+	}
 }
 
 int outband_init(void)
 {
-  	printk("start to outband_init()...ver1.00\n");
-        init_timer(&link_scan_timer);                                                    
+  	printk("start to outband_init()...ver1.1\n");
 
-        link_scan_timer.function = outband_phy_link_status_scan;  
-	printk("HZ=%d\n",HZ);                            
-        link_scan_timer.expires = jiffies + (HZ * 1);                                         
-        add_timer(&link_scan_timer); 
+	task = kthread_create(outband_phy_link_status_scan, NULL, "outband_ls"); 
+	wake_up_process(task);
 	
    	netlink_sock = netlink_kernel_create(&init_net, NETLINK_2000, 0, recv_sock_handler, NULL,THIS_MODULE);
     	if (!netlink_sock) {

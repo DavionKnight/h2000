@@ -37,6 +37,24 @@ int file_write(int fd_pof)
 	return ret;
 }
 
+int epcs_read()
+{
+	int fd,len,ret=0;
+	unsigned char buf[65] = {0};	
+	unsigned int  faddr = 0, i = 0;
+
+	fd = open("./epcs.txt",O_RDWR|O_CREAT);
+
+	while(faddr < 0x30000)
+	{
+		fpga_flash_read(faddr, buf, BLOCK_SIZE);
+		write(fd, buf, BLOCK_SIZE);
+		faddr += BLOCK_SIZE;
+		usleep(10);
+	}
+	close(fd);
+	return 0;
+}
 
 int main(int argc, char *argv[])
 {
@@ -58,23 +76,30 @@ int main(int argc, char *argv[])
 		printf("gpiodrv_init error\n");
 		return 0;
 	}
-	ret = fpga_flash_erase();
-	if(ret < 0)
-	{
-		printf("erase error\n");
-		return -1;
-	}
-	printf("fpga file is %s\nupdating..\n",argv[1]);
-	fd_app = open(argv[1],O_RDWR);
-
-	if(file_write(fd_app)<0)
-	{
-		printf("error\n");
+	if(argv[1][0] == 'r')
+	{	
+		epcs_read();
 	}
 	else
-		printf("update fpga program successfully!\n");	
-	fpga_flash_reconfig();
-	close(fd_app);
+	{
+		ret = fpga_flash_erase();
+		if(ret < 0)
+		{
+			printf("erase error\n");
+			return -1;
+		}
+		printf("fpga file is %s\nupdating..\n",argv[1]);
+		fd_app = open(argv[1],O_RDWR);
+
+		if(file_write(fd_app)<0)
+		{
+			printf("error\n");
+		}
+		else
+			printf("update fpga program successfully!\n");	
+		fpga_flash_reconfig();
+		close(fd_app);
+	}
 	return 0;
 }
 

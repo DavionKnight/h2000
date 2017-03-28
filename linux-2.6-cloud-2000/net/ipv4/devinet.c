@@ -586,6 +586,16 @@ static inline int inet_abc_len(__be32 addr)
 }
 
 
+static unsigned char outband_link_status = 0;
+unsigned char outband_status_get()
+{
+	return outband_link_status;	
+}
+EXPORT_SYMBOL(outband_status_get); 
+void outband_status_set(unsigned short setval)
+{
+	outband_link_status = setval&0xff;
+}
 int devinet_ioctl(struct net *net, unsigned int cmd, void __user *arg)
 {
 	struct ifreq ifr;
@@ -721,6 +731,11 @@ int devinet_ioctl(struct net *net, unsigned int cmd, void __user *arg)
 			break;
 		}
 		ret = dev_change_flags(dev, ifr.ifr_flags);
+		/*add by zhangjiajie 2017-3-28*/
+		if(!strcmp(ifr.ifr_name, "eth0"))
+		{
+			outband_status_set(ifr.ifr_flags&0x1);
+		}
 		break;
 
 	case SIOCSIFADDR:	/* Set interface address (and family) */

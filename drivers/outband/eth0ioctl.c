@@ -492,36 +492,27 @@ int eth0_get_port(int *forcespeed, int *speed, int *duplex)
                 return 0;
         }
 
-	/* 1.get link status*/
-	bcm53101_read(BCM53101_C, 0x11, 0x2, &value);
-	bcm53101_read(BCM53101_C, 0x11, 0x2, &value);
-	if ((value & 0x4) == 0)
+	bcm53101_read(BCM53101_C, 0x11, 0, &value);
+	if((value>>12)&0x1)	/*auto-negotiation*/
 	{
-                printf("outband port is not link\n");
-		return -1;
-	}
-	/* 2.get autonegotiation status
-		auto->get auto speed and duplex
-		forced->get auto speed and duplex*/
-	bcm53101_read(BCM53101_C, 0x11, 0x32, &value);
-	if ((value & 0x8000) != 0)
-	{
-		status = (value>>8)&0x7;
-		
-		if(0x5 == status)
+		*forcespeed = 0;
+
+		bcm53101_read(BCM53101_C, 0x11, 0x32, &value);
+		if ((value & 0x8000) && ((value>>8)&0x7))/*auto complete and valid*/
 		{
 			*speed = IFNET_SPEED_FE;
 			*duplex = IFNET_FULLDUPLEX;
 		}
 		else
 		{
+			
 			*speed = IFNET_SPEED_INVALID;
 			*duplex = IFNET_DUPLEX_INVALID;
 		}
 	}
-	else
+	else	/*forced speed*/
 	{
-		bcm53101_read(BCM53101_C, 0x11, 0x0, &value);
+		*forcespeed = 1;
 		if ((value&0x2000) != 0)
 			*speed = IFNET_SPEED_FE;
 		else
@@ -530,9 +521,8 @@ int eth0_get_port(int *forcespeed, int *speed, int *duplex)
 			*duplex = IFNET_FULLDUPLEX;
 		else
 			*duplex = IFNET_DUPLEX_INVALID;
-        }
-	
-//        printf("speed=%d duplex=%d\n", *speed, *duplex);
+	}
+
         return 0;	
 }
 

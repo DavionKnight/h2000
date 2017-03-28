@@ -60,6 +60,7 @@ sync
 ifconfig lo 127.0.0.1
 #/sbin/insmod /usr/bin/wdt.ko
 
+echo "1" > /proc/sys/net/ipv6/conf/eth0/disable_ipv6
 
 tftp_cliet_ip=192.168.1.1
 tftp_server_ip=192.168.1.254
