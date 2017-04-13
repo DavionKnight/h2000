@@ -39,7 +39,6 @@ struct bcm53101_t{
 
 int genphy_read_link(int bcmfd, unsigned char *link_status)
 {
-	unsigned short value[4];
 	int ret = 0;
 	struct bcm53101_t bcmstr;
 
@@ -53,7 +52,7 @@ int genphy_read_link(int bcmfd, unsigned char *link_status)
 	if(ret < 0)
 		return ret;
 //printf("value=0x%x 0x%x 0x%x 0x%x\n",bcmstr.value[0],bcmstr.value[1],bcmstr.value[2],bcmstr.value[3]);
-	if ((value[0] & 0x4) == 0)
+	if ((bcmstr.value[0] & 0x4) == 0)
 		*link_status = 0;
 	else
 		*link_status = 1;
