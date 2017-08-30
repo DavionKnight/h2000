@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
 {
 	int ret = 0;
 	unsigned short addr = 0,len;
-	unsigned char data[32] = {0};
+	unsigned int data = 0;
 	unsigned char slot_num = 0;
 	int i = 0;	
 
@@ -40,14 +40,14 @@ int main(int argc, char *argv[])
 		printf("2 %s\n",argv[2]);
 #endif
 		printf("slot num %x addr 0x%04x len %d:\n", slot_num, (unsigned short)addr, len);
-		fpga_read(addr, (unsigned char *)data, len, slot_num);
+		fpga_read(addr, (unsigned char *)&data, len, slot_num);
 		printf("The result:\n");
-		for(i = 0; i < len; i++)
-		{	
-			printf("0x%02x ",data[i]);
-			if((i+1)%16 == 0)
-				printf("\n");
-		}
+//		for(i = 0; i < len; i++)
+//		{	
+			printf("0x%02x ",data);
+//			if((i+1)%16 == 0)
+//				printf("\n");
+//		}
 		printf("\n");
 	}
 	else if (argc == 5 && argv[1][0] == 'w') {

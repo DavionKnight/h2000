@@ -169,6 +169,7 @@ static int fpga_local_read ( unsigned int addr, unsigned char *data, size_t coun
 
     ret = spidrv_read ( tx_buf, 3, rx_buf, count, CHIPSELECT_FPGA );
 
+printf("rxbuf[0]=0x%x,rxbuf[1]=0x%x\n",rx_buf[0],rx_buf[1]);
     memcpy ( data, &rx_buf[0], count );
 
     return ret;

@@ -11,7 +11,7 @@
 #CRLDPLIB = 
 #CURSES = 
 #2.6.18-8.el5
-KERNELDIR ?= /home/kevin/works/projects/H18CE-1604C/linux-2.6-cloud
+KERNELDIR ?= /home/kevin/works/projects/H20RN-2000/linux-2.6-cloud-2000
 
 ifneq ($(KERNELRELEASE),)
 

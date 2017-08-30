@@ -37,10 +37,35 @@ struct bcm53101_t{
 #define BCM53101_B 1
 #define BCM53101_C 2
 
+int get_status_in_kernel()
+{
+		struct ifreq ifr;  
+		int sockfd;  
+
+		if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)  
+		{  
+				printf("Create socket fails!\n");  
+				return -1;    
+		}  
+
+		strcpy(ifr.ifr_name, "eth0");  
+		if (ioctl(sockfd, SIOCGIFFLAGS, &ifr) < 0)  
+		{  
+				printf("ioctl SIOCGIFFLAGS fails!\n");  
+				close(sockfd);  
+				return -1;    
+		}  
+
+		close(sockfd);  
+
+		return ifr.ifr_flags&0x1; 
+}
+
 int genphy_read_link(int bcmfd, unsigned char *link_status)
 {
 	int ret = 0;
 	struct bcm53101_t bcmstr;
+	int status = 0;
 
 	bcmstr.which_sw = BCM53101_C;
 	bcmstr.page= 0x11;
@@ -51,11 +76,12 @@ int genphy_read_link(int bcmfd, unsigned char *link_status)
 	ret = read(bcmfd, &bcmstr, sizeof(bcmstr));	
 	if(ret < 0)
 		return ret;
-//printf("value=0x%x 0x%x 0x%x 0x%x\n",bcmstr.value[0],bcmstr.value[1],bcmstr.value[2],bcmstr.value[3]);
-	if ((bcmstr.value[0] & 0x4) == 0)
-		*link_status = 0;
-	else
-		*link_status = 1;
+
+	status = get_status_in_kernel();
+//printf("value=0x%x  %d\n",bcmstr.value[0],status);
+
+	*link_status = status & (bcmstr.value[0]>>2);
+
 	return 0;
 }
 
