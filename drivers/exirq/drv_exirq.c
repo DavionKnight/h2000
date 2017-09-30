@@ -28,7 +28,7 @@
 
 struct irq16_share{
 	int id;
-	unsigned int *pic_vaddr;
+	volatile unsigned int *pic_vaddr;
 	wait_queue_head_t intsem;
 	atomic_t semval;	
 	struct irq16_share *next;
@@ -101,16 +101,19 @@ static irqreturn_t exirq_process ( int q, void *dev_id )
 	u32 regdata;
 	struct irq16_share *irq = irq16_head;
 	
+	//printk("irq happen \n");
 	while(NULL != irq)	
 	{
 			regdata = in_be32(irq->pic_vaddr);
 
 			if(regdata & 0x40000000)
 			{
-		printk("get_int  %d\n",irq->id);
+					//printk("irq id=%d \n",irq->id);
 					atomic_set(&irq->semval, 1);
 					wake_up_interruptible(&irq->intsem);	
+					break;
 			}
+			irq = irq->next;
 	}
 
 	return IRQ_RETVAL(1);
@@ -125,17 +128,14 @@ static long exirq_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 
 		irq = get_int_node_by_id(cmd);
 		
-		printk("get_int_node_by_id %d\n",cmd);
 		if(NULL == irq)
 		{
 			printk("arg = %d err\n", cmd);
 			return 0;
 		}	
-		printk("get_int_node_by_id succ, before wait %d\n",cmd);
 
 		wait_event_interruptible(irq->intsem,atomic_read(&irq->semval)!=0);
 		atomic_set(&irq->semval, 0);
-		printk("get_int_node_by_id succ,af wait %d\n",cmd);
 
 		return 0;
 }
@@ -163,7 +163,7 @@ int exirq_int_add(int id)
 	atomic_set(&int16->semval, 0);
 	int16->next = NULL;
 
-	int16->pic_vaddr =(unsigned int *)ioremap(get_immrbase() + MPC85xx_PIC_EIVPR_ADDR(id), 64);
+	int16->pic_vaddr =(unsigned int *)ioremap(get_immrbase() + MPC85xx_PIC_EIVPR_ADDR(id), 128);
 
 	add_int_node(int16);
 
@@ -173,6 +173,7 @@ int exirq_int_add(int id)
 	out_be32(int16->pic_vaddr, regdata);
 
 	/* init EIDR4 to let core process the int*/
+	/*IO address */
 	regdata  = 2;
 	out_be32((int16->pic_vaddr+4), regdata);
 #endif
